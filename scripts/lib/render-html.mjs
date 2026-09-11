@@ -22,15 +22,15 @@ export function renderCards(projects) {
     ].filter(Boolean).map((m) => `<li>${htmlEscape(m)}</li>`).join('');
 
     const also = [
-      `<a href="${htmlEscape(p.repoUrl)}">Source</a>`,
-      ...(p.hasLlms ? [`<a href="${htmlEscape(`${p.url}llms.txt`)}">llms.txt</a>`] : []),
+      `<a href="${htmlEscape(p.repoUrl)}" aria-label="Source for ${htmlEscape(p.name)}">Source</a>`,
+      ...(p.hasLlms ? [`<a href="${htmlEscape(`${p.url}llms.txt`)}" aria-label="llms.txt for ${htmlEscape(p.name)}">llms.txt</a>`] : []),
     ].join(' · ');
 
     return `
       <li class="card">
         <h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
         <p>${htmlEscape(p.description || 'No description provided.')}</p>
-        <ul class="meta">${meta}</ul>
+        <ul class="meta" role="list">${meta}</ul>
         <p class="also">${also}</p>
       </li>`;
   }).join('');

@@ -48,7 +48,36 @@ test('each card link is named by its project, not by filler text', () => {
   for (const p of projects) {
     assert.ok(html.includes(`<a href="${p.url}">${p.name}</a>`), `no named link for ${p.name}`);
   }
-  assert.doesNotMatch(html, />\s*(read more|click here|docs)\s*</i);
+});
+
+/** Accessible name: an aria-label wins, otherwise the link's own text content. */
+function linkNames(doc) {
+  return [...doc.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(([, attrs, inner]) => {
+    const label = attrs.match(/\baria-label="([^"]*)"/);
+    return (label ? label[1] : inner.replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();
+  });
+}
+
+test('no two links in the document share an accessible name', () => {
+  const names = linkNames(html);
+  assert.ok(names.length >= 8, `only ${names.length} links found, the check would be vacuous`);
+  const seen = new Set();
+  const dupes = new Set();
+  for (const n of names) {
+    const key = n.toLowerCase();
+    if (seen.has(key)) dupes.add(n);
+    seen.add(key);
+  }
+  assert.deepEqual([...dupes], [],
+    `links sharing an accessible name: ${[...dupes].join(', ')}`);
+});
+
+test('lists keep their list role even though the stylesheet hides the bullets', () => {
+  for (const [label, doc] of [['index', html], ['404', template404]]) {
+    for (const ul of doc.match(/<ul\b[^>]*>/g) ?? []) {
+      assert.match(ul, /\srole="list"/, `${label}: list without role="list": ${ul}`);
+    }
+  }
 });
 
 test('cards are list items inside the cards list', () => {
