@@ -91,9 +91,9 @@ test('llms.txt lists every project as a markdown link with its description', () 
   assert.ok(out.includes(`[okf-skills](${ORIGIN}/okf-skills/)`));
 });
 
-test('llms.txt points agents at a nested llms.txt only where one exists', () => {
+test('llms.txt points agents at a nested llms.txt only where one exists, as a markdown link', () => {
   const out = renderLlms(owner, projects);
-  assert.ok(out.includes(`${ORIGIN}/cloud-cache-action/llms.txt`));
+  assert.ok(out.includes(`— [llms.txt](${ORIGIN}/cloud-cache-action/llms.txt)`));
   assert.ok(!out.includes(`${ORIGIN}/okf-skills/llms.txt`));
 });
 

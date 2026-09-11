@@ -93,6 +93,36 @@ test('the nested llms.txt link appears only where one exists', () => {
   assert.ok(!html.includes('https://xsavikx.github.io/okf-skills/llms.txt'));
 });
 
+test('a project with topics renders each one, escaped, in its own list', () => {
+  const cloudCache = projects.find((p) => p.name === 'cloud-cache-action');
+  assert.deepEqual(cloudCache.topics, ['github-actions', 'cache']);
+  const out = renderCards([cloudCache]);
+  assert.match(out, /<ul class="topics" role="list">/);
+  assert.ok(out.includes('<li>github-actions</li>'));
+  assert.ok(out.includes('<li>cache</li>'));
+});
+
+test('a project with no topics renders no topics list at all', () => {
+  const noTopics = projects.find((p) => p.name === 'AndroidScreencast');
+  assert.deepEqual(noTopics.topics, []);
+  const out = renderCards([noTopics]);
+  assert.ok(!out.includes('class="topics"'));
+});
+
+test('topics beyond the cap collapse into a "+N more" count instead of piling up', () => {
+  const manyTopics = { ...projects[0], topics: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] };
+  const out = renderCards([manyTopics]);
+  assert.ok(out.includes('<li>+2 more</li>'));
+  assert.ok(!out.includes('<li>g</li>'));
+});
+
+test('topic text is HTML-escaped like every other interpolated value', () => {
+  const evilTopics = { ...projects[0], topics: ['<script>x</script>'] };
+  const out = renderCards([evilTopics]);
+  assert.ok(!out.includes('<script>x</script>'));
+  assert.ok(out.includes('&lt;script&gt;x&lt;/script&gt;'));
+});
+
 test('user-supplied text is HTML-escaped', () => {
   const evil = [{ ...projects[0], description: '<script>alert(1)</script>', name: 'a&b' }];
   const out = renderCards(evil);

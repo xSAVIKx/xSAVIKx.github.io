@@ -13,6 +13,11 @@ export function fill(template, values) {
     Object.hasOwn(values, key) ? values[key] : match);
 }
 
+// Repos can carry dozens of topics; past this many the card would read as a
+// wall of tags rather than a scannable summary, so the rest are folded into
+// a "+N more" count instead of rendered individually.
+const TOPIC_CAP = 6;
+
 export function renderCards(projects) {
   return projects.map((p) => {
     const meta = [
@@ -20,6 +25,17 @@ export function renderCards(projects) {
       `${p.stars} ${p.stars === 1 ? 'star' : 'stars'}`,
       `Updated ${isoDate(p.pushedAt)}`,
     ].filter(Boolean).map((m) => `<li>${htmlEscape(m)}</li>`).join('');
+
+    const topicItems = p.topics
+      .slice(0, TOPIC_CAP)
+      .map((t) => `<li>${htmlEscape(t)}</li>`)
+      .join('');
+    const topicOverflow = p.topics.length > TOPIC_CAP
+      ? `<li>+${p.topics.length - TOPIC_CAP} more</li>`
+      : '';
+    const topics = p.topics.length
+      ? `<ul class="topics" role="list">${topicItems}${topicOverflow}</ul>`
+      : '';
 
     const also = [
       `<a href="${htmlEscape(p.repoUrl)}" aria-label="Source for ${htmlEscape(p.name)}">Source</a>`,
@@ -30,6 +46,7 @@ export function renderCards(projects) {
       <li class="card">
         <h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
         <p>${htmlEscape(p.description || 'No description provided.')}</p>
+        ${topics}
         <ul class="meta" role="list">${meta}</ul>
         <p class="also">${also}</p>
       </li>`;

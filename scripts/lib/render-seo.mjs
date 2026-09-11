@@ -84,7 +84,7 @@ function summary(owner) {
 export function renderLlms(owner, projects) {
   const items = projects.map((p) => {
     const desc = p.description || 'No description provided.';
-    const nested = p.hasLlms ? ` Machine-readable index: ${p.url}llms.txt` : '';
+    const nested = p.hasLlms ? ` — [llms.txt](${p.url}llms.txt)` : '';
     return `- [${p.name}](${p.url}): ${desc}${nested}`;
   });
   return [
