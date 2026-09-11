@@ -524,7 +524,7 @@ Expected: FAIL — `Cannot find module '../scripts/lib/render-seo.mjs'`
 `scripts/lib/render-seo.mjs`:
 
 ```js
-import { ORIGIN, OWNER, PRIMARY_SITE } from './discover.mjs';
+import { ORIGIN, PRIMARY_SITE } from './discover.mjs';
 
 /**
  * Named explicitly rather than relying on the wildcard, so the policy is
@@ -1173,7 +1173,7 @@ export function render404(template) {
 - [ ] **Step 8: Run the tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS — 49 tests total, 0 failures
+Expected: PASS — 50 tests total, 0 failures
 
 - [ ] **Step 9: Commit**
 
@@ -1363,7 +1363,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS — 55 tests total, 0 failures
+Expected: PASS — 56 tests total, 0 failures
 
 Note: the build test copies `src/og.png`, so Task 6 must have produced it — if you are running tasks strictly in order, create a 1×1 placeholder PNG now and let Task 6 replace it.
 
@@ -1446,13 +1446,20 @@ check('sitemap index references the fallback urlset',
 check('every sitemap URL is same-origin',
   [...childSitemaps, ...locs(pages)].every((u) => u.startsWith(ORIGIN)));
 
-// Live reachability — the point of this script
+// Live reachability — the point of this script.
+// Anything this build generates at the origin root is NOT yet deployed when we
+// run locally, and is already verified above by reading dist/. Checking it here
+// would fail every pre-deploy run against a file we just wrote ourselves.
+const GENERATED_AT_ROOT = new Set(['', 'index.html', '404.html', 'robots.txt',
+  'sitemap.xml', 'sitemap-pages.xml', 'llms.txt', 'llms-full.txt',
+  'styles.css', 'og.png'].map((f) => `${ORIGIN}/${f}`));
+
 const live = [...new Set([
-  ...locs(pages).filter((u) => u !== `${ORIGIN}/`),
-  ...childSitemaps.filter((u) => u !== `${ORIGIN}/sitemap-pages.xml`),
+  ...locs(pages),
+  ...childSitemaps,
   ...REQUIRED.map((n) => `${ORIGIN}/${n}/`),
   ...[...llms.matchAll(/\((https:\/\/[^)]+)\)/g)].map((m) => m[1]),
-])];
+])].filter((u) => !GENERATED_AT_ROOT.has(u));
 
 for (const url of live) {
   const s = await status(url);
