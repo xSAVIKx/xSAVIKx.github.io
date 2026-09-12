@@ -2,11 +2,11 @@
 import { mkdir, writeFile, copyFile, readFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { fetchAllRepos, fetchOwner, selectProjects, enrichAll } from './lib/discover.mjs';
+import { fetchAllRepos, fetchOwner, selectProjects, enrichAll, SITE_HOST } from './lib/discover.mjs';
 import {
   renderRobots, renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
 } from './lib/render-seo.mjs';
-import { renderIndex, render404 } from './lib/render-html.mjs';
+import { renderIndex, render404, fill, htmlEscape } from './lib/render-html.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
@@ -32,14 +32,17 @@ export async function build({
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
 
-  const [indexTemplate, template404] = await Promise.all([
+  const [indexTemplate, template404, manifestTemplate] = await Promise.all([
     readFile(path.join(SRC, 'index.html'), 'utf8'),
     readFile(path.join(SRC, '404.html'), 'utf8'),
+    readFile(path.join(SRC, 'site.webmanifest'), 'utf8'),
   ]);
 
   const generated = {
     'index.html': renderIndex({ template: indexTemplate, owner, projects, now }),
     '404.html': render404(template404),
+    // Templated rather than copied: it names the host, which must follow SITE_ORIGIN.
+    'site.webmanifest': fill(manifestTemplate, { HOST: htmlEscape(SITE_HOST) }),
     'robots.txt': renderRobots(),
     'sitemap.xml': renderSitemapIndex(projects, now),
     'sitemap-pages.xml': renderSitemapPages(projects, now),
@@ -51,7 +54,7 @@ export async function build({
     .map(([name, body]) => writeFile(path.join(outDir, name), body)));
 
   const copied = ['styles.css', 'og.png', 'favicon.svg', 'favicon.ico',
-    'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'site.webmanifest'];
+    'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
   await Promise.all(copied.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
 
   return { owner, projects, files: [...Object.keys(generated), ...copied] };

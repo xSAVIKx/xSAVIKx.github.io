@@ -1,5 +1,30 @@
 export const OWNER = 'xSAVIKx';
-export const ORIGIN = 'https://xsavikx.github.io';
+
+/**
+ * The single place this estate's public identity is defined.
+ *
+ * Every absolute URL this build emits derives from it: canonical, og:url,
+ * both JSON-LD @ids, both sitemaps, the Sitemap: line in robots.txt, and every
+ * link in llms.txt / llms-full.txt. Changing the hostname is changing this line.
+ *
+ * It also governs every project site published under the same account: a custom
+ * domain on a user-pages repo applies to all of them, so `<origin>/<project>/`
+ * is the permanent docs host for every repo with Pages enabled, inherited
+ * automatically by new ones. test/origin.test.mjs fails if the literal hostname
+ * reappears anywhere else.
+ *
+ * No trailing slash — every construction adds one explicitly.
+ */
+export const SITE_ORIGIN = 'https://xsavikx.github.io';
+
+/** Host without scheme, for display and for og:site_name. */
+export const SITE_HOST = new URL(SITE_ORIGIN).host;
+
+/**
+ * The name of THIS repository, which is deliberately NOT derived from
+ * SITE_ORIGIN. They coincide today only because a user-pages repo is named
+ * after the github.io host; the repo keeps that name under any custom domain.
+ */
 export const SELF_REPO = 'xsavikx.github.io';
 export const PRIMARY_SITE = 'https://serhiichuk.dev/';
 
@@ -27,7 +52,7 @@ export function toProject(repo) {
   return {
     name: repo.name,
     description: (repo.description ?? '').trim(),
-    url: `${ORIGIN}/${repo.name}/`,
+    url: `${SITE_ORIGIN}/${repo.name}/`,
     repoUrl: repo.html_url,
     language: repo.language ?? null,
     topics: repo.topics ?? [],

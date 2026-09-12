@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { selectProjects, fetchOwner, ORIGIN } from '../scripts/lib/discover.mjs';
+import { selectProjects, fetchOwner, SITE_ORIGIN } from '../scripts/lib/discover.mjs';
 import {
   AI_CRAWLERS, xmlEscape, isoDate, renderRobots,
   renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
@@ -23,7 +23,7 @@ const owner = await fetchOwner(async () => ({ ok: true, status: 200, json: async
 test('robots allows everyone and names the sitemap', () => {
   const out = renderRobots();
   assert.match(out, /^User-agent: \*\nAllow: \/$/m);
-  assert.match(out, new RegExp(`^Sitemap: ${ORIGIN}/sitemap\\.xml$`, 'm'));
+  assert.match(out, new RegExp(`^Sitemap: ${SITE_ORIGIN}/sitemap\\.xml$`, 'm'));
 });
 
 test('robots explicitly welcomes every named AI crawler', () => {
@@ -40,8 +40,8 @@ test('robots disallows nothing at all', () => {
 test('sitemap index points at the fallback urlset and at child sitemaps', () => {
   const out = renderSitemapIndex(projects, NOW);
   assert.match(out, /<sitemapindex /);
-  assert.ok(out.includes(`<loc>${ORIGIN}/sitemap-pages.xml</loc>`));
-  assert.ok(out.includes(`<loc>${ORIGIN}/cloud-cache-action/sitemap.xml</loc>`));
+  assert.ok(out.includes(`<loc>${SITE_ORIGIN}/sitemap-pages.xml</loc>`));
+  assert.ok(out.includes(`<loc>${SITE_ORIGIN}/cloud-cache-action/sitemap.xml</loc>`));
 });
 
 test('sitemap index omits projects that have no sitemap of their own', () => {
@@ -52,11 +52,11 @@ test('sitemap index omits projects that have no sitemap of their own', () => {
 
 test('urlset carries the hub root plus only the sitemap-less project roots', () => {
   const out = renderSitemapPages(projects, NOW);
-  assert.ok(out.includes(`<loc>${ORIGIN}/</loc>`));
-  assert.ok(out.includes(`<loc>${ORIGIN}/okf-skills/</loc>`));
-  assert.ok(out.includes(`<loc>${ORIGIN}/AndroidScreencast/</loc>`));
+  assert.ok(out.includes(`<loc>${SITE_ORIGIN}/</loc>`));
+  assert.ok(out.includes(`<loc>${SITE_ORIGIN}/okf-skills/</loc>`));
+  assert.ok(out.includes(`<loc>${SITE_ORIGIN}/AndroidScreencast/</loc>`));
   // it has its own sitemap, so listing it here would duplicate that sitemap's root entry
-  assert.ok(!out.includes(`<loc>${ORIGIN}/cloud-cache-action/</loc>`));
+  assert.ok(!out.includes(`<loc>${SITE_ORIGIN}/cloud-cache-action/</loc>`));
 });
 
 test('urlset uses each project push date as lastmod and today for the hub', () => {
@@ -86,15 +86,15 @@ test('llms.txt opens with an H1 and a blockquote summary', () => {
 
 test('llms.txt lists every project as a markdown link with its description', () => {
   const out = renderLlms(owner, projects);
-  assert.ok(out.includes(`[cloud-cache-action](${ORIGIN}/cloud-cache-action/)`));
+  assert.ok(out.includes(`[cloud-cache-action](${SITE_ORIGIN}/cloud-cache-action/)`));
   assert.ok(out.includes('High-performance GitHub Action for CI cache.'));
-  assert.ok(out.includes(`[okf-skills](${ORIGIN}/okf-skills/)`));
+  assert.ok(out.includes(`[okf-skills](${SITE_ORIGIN}/okf-skills/)`));
 });
 
 test('llms.txt points agents at a nested llms.txt only where one exists, as a markdown link', () => {
   const out = renderLlms(owner, projects);
-  assert.ok(out.includes(`— [llms.txt](${ORIGIN}/cloud-cache-action/llms.txt)`));
-  assert.ok(!out.includes(`${ORIGIN}/okf-skills/llms.txt`));
+  assert.ok(out.includes(`— [llms.txt](${SITE_ORIGIN}/cloud-cache-action/llms.txt)`));
+  assert.ok(!out.includes(`${SITE_ORIGIN}/okf-skills/llms.txt`));
 });
 
 test('llms.txt links the primary site', () => {

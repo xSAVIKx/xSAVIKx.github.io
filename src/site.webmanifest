@@ -1,7 +1,7 @@
 {
   "name": "Yurii Serhiichuk — open-source projects",
   "short_name": "YS projects",
-  "description": "GitHub Pages sites published under xsavikx.github.io.",
+  "description": "GitHub Pages sites published under {{HOST}}.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0d1117",

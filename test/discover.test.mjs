@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  ORIGIN, isProjectSite, toProject, selectProjects,
+  SITE_ORIGIN, isProjectSite, toProject, selectProjects,
   probeAsset, enrichAll, fetchAllRepos, fetchOwner,
 } from '../scripts/lib/discover.mjs';
 
@@ -33,9 +33,9 @@ test('drops forks and private repos', () => {
 test('normalizes the site URL, ignoring the homepage field', () => {
   // homepage has no trailing slash upstream; ours always does
   assert.equal(toProject(byName('AndroidScreencast')).url,
-    `${ORIGIN}/AndroidScreencast/`);
+    `${SITE_ORIGIN}/AndroidScreencast/`);
   // homepage is null upstream; we still derive a URL
-  assert.equal(toProject(byName('okf-skills')).url, `${ORIGIN}/okf-skills/`);
+  assert.equal(toProject(byName('okf-skills')).url, `${SITE_ORIGIN}/okf-skills/`);
 });
 
 test('coerces a null description to an empty string', () => {

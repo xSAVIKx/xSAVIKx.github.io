@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { ORIGIN } from './lib/discover.mjs';
+import { SITE_ORIGIN } from './lib/discover.mjs';
 
 const DIST = path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), 'dist');
 const REQUIRED = ['cloud-cache-action', 'AndroidScreencast', 'okf-skills'];
@@ -40,7 +40,7 @@ check('JSON-LD parses', (() => {
 })());
 
 for (const name of REQUIRED) {
-  check(`index lists ${name}`, html.includes(`${ORIGIN}/${name}/`));
+  check(`index lists ${name}`, html.includes(`${SITE_ORIGIN}/${name}/`));
 }
 
 // Icon set — these are copied, not generated, so a missing source file would
@@ -62,16 +62,16 @@ check('favicon is local, not a third-party request',
   !/<link rel="icon"[^>]*avatars\.githubusercontent\.com/.test(html));
 
 // robots.txt
-check('robots names the sitemap', robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
+check('robots names the sitemap', robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`));
 check('robots disallows nothing', !/^Disallow: \S/m.test(robots));
 
 // Sitemaps
 const childSitemaps = locs(sitemap);
 check('sitemap index is an index', sitemap.includes('<sitemapindex'));
 check('sitemap index references the fallback urlset',
-  childSitemaps.includes(`${ORIGIN}/sitemap-pages.xml`));
+  childSitemaps.includes(`${SITE_ORIGIN}/sitemap-pages.xml`));
 check('every sitemap URL is same-origin',
-  [...childSitemaps, ...locs(pages)].every((u) => u.startsWith(ORIGIN)));
+  [...childSitemaps, ...locs(pages)].every((u) => u.startsWith(SITE_ORIGIN)));
 
 // Live reachability — the point of this script.
 // Anything this build generates at the origin root is NOT yet deployed when we
@@ -79,12 +79,12 @@ check('every sitemap URL is same-origin',
 // would fail every pre-deploy run against a file we just wrote ourselves.
 const GENERATED_AT_ROOT = new Set(['', 'index.html', '404.html', 'robots.txt',
   'sitemap.xml', 'sitemap-pages.xml', 'llms.txt', 'llms-full.txt',
-  'styles.css', 'og.png'].map((f) => `${ORIGIN}/${f}`));
+  'styles.css', 'og.png'].map((f) => `${SITE_ORIGIN}/${f}`));
 
 const live = [...new Set([
   ...locs(pages),
   ...childSitemaps,
-  ...REQUIRED.map((n) => `${ORIGIN}/${n}/`),
+  ...REQUIRED.map((n) => `${SITE_ORIGIN}/${n}/`),
   ...[...llms.matchAll(/\((https:\/\/[^)]+)\)/g)].map((m) => m[1]),
 ])].filter((u) => !GENERATED_AT_ROOT.has(u));
 

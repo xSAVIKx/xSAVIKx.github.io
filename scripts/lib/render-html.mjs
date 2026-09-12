@@ -1,4 +1,4 @@
-import { ORIGIN, PRIMARY_SITE } from './discover.mjs';
+import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE } from './discover.mjs';
 import { isoDate } from './render-seo.mjs';
 
 export function htmlEscape(s) {
@@ -70,7 +70,7 @@ export function renderJsonLd(owner, projects) {
     '@graph': [
       {
         '@type': 'Person',
-        '@id': `${ORIGIN}/#person`,
+        '@id': `${SITE_ORIGIN}/#person`,
         name: owner.name,
         description: owner.bio || undefined,
         image: owner.avatar,
@@ -83,10 +83,10 @@ export function renderJsonLd(owner, projects) {
       },
       {
         '@type': 'CollectionPage',
-        '@id': `${ORIGIN}/`,
-        url: `${ORIGIN}/`,
+        '@id': `${SITE_ORIGIN}/`,
+        url: `${SITE_ORIGIN}/`,
         name: `${owner.name} — open-source projects`,
-        about: { '@id': `${ORIGIN}/#person` },
+        about: { '@id': `${SITE_ORIGIN}/#person` },
         mainEntity: {
           '@type': 'ItemList',
           numberOfItems: projects.length,
@@ -107,9 +107,11 @@ export function renderJsonLd(owner, projects) {
 
 export function renderIndex({ template, owner, projects, now }) {
   const title = `${owner.name} — open-source projects`;
-  const description = `GitHub Pages sites published under ${new URL(ORIGIN).host}, `
+  const description = `GitHub Pages sites published under ${SITE_HOST}, `
     + `by ${owner.name}. Primary site: ${new URL(PRIMARY_SITE).host}.`;
   return fill(template, {
+    ORIGIN: htmlEscape(SITE_ORIGIN),
+    HOST: htmlEscape(SITE_HOST),
     TITLE: htmlEscape(title),
     DESCRIPTION: htmlEscape(description),
     NAME: htmlEscape(owner.name),
@@ -123,5 +125,5 @@ export function renderIndex({ template, owner, projects, now }) {
 }
 
 export function render404(template) {
-  return template;
+  return fill(template, { ORIGIN: htmlEscape(SITE_ORIGIN), HOST: htmlEscape(SITE_HOST) });
 }
