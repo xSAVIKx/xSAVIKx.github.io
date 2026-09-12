@@ -61,8 +61,7 @@ npm run verify # live checks against the deployed site (post-deploy only)
 
 ## Zero dependencies, on purpose
 
-This repo has no `node_modules` and no entries in `package.json` beyond the `scripts`
-block. Everything is written against Node.js 22+ built-in APIs (`node:test`, `fetch`,
+This repo has no `node_modules` and no `dependencies` or `devDependencies` at all. Everything is written against Node.js 24+ built-in APIs (`node:test`, `fetch`,
 `node:fs/promises`, etc.), as plain ESM `.mjs` files. There is nothing to `npm install`
 and nothing to audit for supply-chain risk — that tradeoff is intentional for a small,
 low-churn static site, not an oversight.
@@ -71,5 +70,5 @@ low-churn static site, not an oversight.
 
 `.github/workflows/deploy.yml` runs on push to `main`, on a weekly schedule (so a newly
 published project site shows up even without a push to this repo), and on manual
-dispatch. It runs `npm test` then `npm run build` on Node 22, then publishes `dist/` to
+dispatch. It runs `npm test` then `npm run build` on Node 24, then publishes `dist/` to
 GitHub Pages via `actions/deploy-pages`.
