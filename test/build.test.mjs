@@ -14,7 +14,9 @@ const NOW = new Date('2026-09-11T00:00:00Z');
 function fakeFetch(overrides = {}) {
   return async (url, opts = {}) => {
     if (opts.method === 'HEAD') {
-      return { ok: String(url).includes('cloud-cache-action'), status: 200 };
+      return String(url).includes('cloud-cache-action')
+        ? { ok: true, status: 200 }
+        : { ok: false, status: 404 };
     }
     if (String(url).includes('/users/xSAVIKx/repos')) {
       const body = overrides.repos ?? repos;

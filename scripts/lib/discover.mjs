@@ -94,21 +94,58 @@ export async function fetchOwner(fetchFn, token) {
   };
 }
 
-/** A missing file on GitHub Pages is a 404 with an HTML body, so trust the status. */
-export async function probeAsset(fetchFn, url) {
-  try {
-    const res = await fetchFn(url, { method: 'HEAD' });
-    return Boolean(res.ok);
-  } catch {
-    return false;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Does `url` exist? Answers only when it can actually tell.
+ *
+ * Three outcomes, and the third is the reason this is not a plain boolean:
+ *   2xx                     -> true   (present)
+ *   4xx                     -> false  (definitively absent; a missing file on
+ *                                      GitHub Pages is a 404 with an HTML body)
+ *   transport failure / 5xx -> retry, then THROW
+ *
+ * The third case is unknown, not absent, and collapsing it into `false` is how a
+ * build publishes a quietly degraded sitemap while every step reports success: a
+ * project's child sitemap silently vanishes from the index because DNS was slow,
+ * not because the file went away. A build that cannot reach the host must not
+ * publish a sitemap asserting what it found there, so it fails instead.
+ *
+ * This matters most the first time the site's origin changes, when the host
+ * genuinely is unreachable for a while and the unknown case stops being
+ * theoretical.
+ */
+export async function probeAsset(fetchFn, url, { retries = 2, delay = sleep } = {}) {
+  let reason = 'unknown';
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    if (attempt > 0) await delay(250 * 2 ** (attempt - 1));
+
+    let res;
+    try {
+      res = await fetchFn(url, { method: 'HEAD' });
+    } catch (err) {
+      reason = err?.message ?? String(err);
+      continue;
+    }
+
+    if (res.ok) return true;
+    if (res.status >= 400 && res.status < 500) return false;
+    reason = `HTTP ${res.status}`;
   }
+
+  throw new Error(
+    `Could not determine whether ${url} exists after ${retries + 1} attempts (${reason}). `
+    + 'Refusing to guess: treating an unreachable host as "no such file" would publish '
+    + 'a sitemap that quietly drops pages while reporting success.',
+  );
 }
 
-export async function enrichAll(fetchFn, projects) {
+export async function enrichAll(fetchFn, projects, options = {}) {
   return Promise.all(projects.map(async (p) => {
     const [hasSitemap, hasLlms] = await Promise.all([
-      probeAsset(fetchFn, `${p.url}sitemap.xml`),
-      probeAsset(fetchFn, `${p.url}llms.txt`),
+      probeAsset(fetchFn, `${p.url}sitemap.xml`, options),
+      probeAsset(fetchFn, `${p.url}llms.txt`, options),
     ]);
     return { ...p, hasSitemap, hasLlms };
   }));

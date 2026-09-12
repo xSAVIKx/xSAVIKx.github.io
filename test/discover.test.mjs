@@ -48,18 +48,68 @@ test('selects exactly the three real project sites, newest push first', () => {
 });
 
 test('probeAsset reports true only on a 2xx', async () => {
-  const fake = async (url) => ({ ok: url.endsWith('sitemap.xml'), status: 200 });
+  // an absent file is a real 404, not an ok:false with a 200 status
+  const fake = async (url) => (url.endsWith('sitemap.xml')
+    ? { ok: true, status: 200 }
+    : { ok: false, status: 404 });
   assert.equal(await probeAsset(fake, 'https://x/sitemap.xml'), true);
   assert.equal(await probeAsset(fake, 'https://x/llms.txt'), false);
 });
 
-test('probeAsset swallows network errors as false', async () => {
-  const boom = async () => { throw new Error('offline'); };
-  assert.equal(await probeAsset(boom, 'https://x/sitemap.xml'), false);
+test('probeAsset treats a 404 as a definitive absence, without retrying', async () => {
+  let calls = 0;
+  const gone = async () => { calls += 1; return { ok: false, status: 404 }; };
+  assert.equal(await probeAsset(gone, 'https://x/llms.txt', { delay: async () => {} }), false);
+  assert.equal(calls, 1, 'a definitive answer must not be retried');
+});
+
+test('probeAsset refuses to call an unreachable host "absent"', async () => {
+  const offline = async () => { throw new Error('ENOTFOUND'); };
+  await assert.rejects(
+    () => probeAsset(offline, 'https://new-host/sitemap.xml', { delay: async () => {} }),
+    (err) => {
+      // the message must name the URL, or a flip-day failure is unactionable
+      assert.match(err.message, /new-host\/sitemap\.xml/);
+      assert.match(err.message, /ENOTFOUND/);
+      assert.match(err.message, /Refusing to guess/);
+      return true;
+    },
+  );
+});
+
+test('probeAsset retries a transport failure and succeeds if the host recovers', async () => {
+  let calls = 0;
+  const flaky = async () => {
+    calls += 1;
+    if (calls < 3) throw new Error('ECONNRESET');
+    return { ok: true, status: 200 };
+  };
+  assert.equal(await probeAsset(flaky, 'https://x/sitemap.xml', { delay: async () => {} }), true);
+  assert.equal(calls, 3);
+});
+
+test('probeAsset retries a 5xx, which says nothing about whether the file exists', async () => {
+  let calls = 0;
+  const broken = async () => { calls += 1; return { ok: false, status: 503 }; };
+  await assert.rejects(
+    () => probeAsset(broken, 'https://x/sitemap.xml', { delay: async () => {} }),
+    /HTTP 503/,
+  );
+  assert.equal(calls, 3, 'default is 1 attempt plus 2 retries');
+});
+
+test('a probe failure aborts enrichment rather than degrading the sitemap', async () => {
+  const offline = async () => { throw new Error('EAI_AGAIN'); };
+  await assert.rejects(
+    () => enrichAll(offline, selectProjects(repos), { delay: async () => {} }),
+    /Refusing to guess/,
+  );
 });
 
 test('enrichAll annotates each project with its available assets', async () => {
-  const fake = async (url) => ({ ok: url.includes('cloud-cache-action'), status: 200 });
+  const fake = async (url) => (url.includes('cloud-cache-action')
+    ? { ok: true, status: 200 }
+    : { ok: false, status: 404 });
   const enriched = await enrichAll(fake, selectProjects(repos));
   const cca = enriched.find((p) => p.name === 'cloud-cache-action');
   const okf = enriched.find((p) => p.name === 'okf-skills');
