@@ -34,8 +34,10 @@ test('writes the full set of artifacts', async () => {
   await build({ fetchFn: fakeFetch(), now: NOW, outDir: dir });
   const written = (await readdir(dir)).sort();
   assert.deepEqual(written, [
-    '404.html', 'index.html', 'llms-full.txt', 'llms.txt',
-    'og.png', 'robots.txt', 'sitemap-pages.xml', 'sitemap.xml', 'styles.css',
+    '404.html', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg',
+    'icon-192.png', 'icon-512.png', 'index.html', 'llms-full.txt', 'llms.txt',
+    'og.png', 'robots.txt', 'site.webmanifest', 'sitemap-pages.xml',
+    'sitemap.xml', 'styles.css',
   ]);
 });
 

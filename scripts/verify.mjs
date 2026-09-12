@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { ORIGIN } from './lib/discover.mjs';
@@ -41,6 +42,24 @@ check('JSON-LD parses', (() => {
 for (const name of REQUIRED) {
   check(`index lists ${name}`, html.includes(`${ORIGIN}/${name}/`));
 }
+
+// Icon set — these are copied, not generated, so a missing source file would
+// otherwise only surface as a broken favicon in a browser tab.
+for (const asset of ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png',
+  'icon-192.png', 'icon-512.png', 'site.webmanifest']) {
+  const { statSync } = await import('node:fs');
+  let bytes = 0;
+  try { bytes = statSync(path.join(DIST, asset)).size; } catch { bytes = 0; }
+  check(`icon asset ${asset}`, bytes > 0, bytes ? `${bytes} bytes` : 'missing or empty');
+}
+
+check('manifest is valid JSON', (() => {
+  try { JSON.parse(readFileSync(path.join(DIST, 'site.webmanifest'), 'utf8')); return true; }
+  catch { return false; }
+})());
+
+check('favicon is local, not a third-party request',
+  !/<link rel="icon"[^>]*avatars\.githubusercontent\.com/.test(html));
 
 // robots.txt
 check('robots names the sitemap', robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));

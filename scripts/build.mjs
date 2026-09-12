@@ -50,7 +50,8 @@ export async function build({
   await Promise.all(Object.entries(generated)
     .map(([name, body]) => writeFile(path.join(outDir, name), body)));
 
-  const copied = ['styles.css', 'og.png'];
+  const copied = ['styles.css', 'og.png', 'favicon.svg', 'favicon.ico',
+    'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'site.webmanifest'];
   await Promise.all(copied.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
 
   return { owner, projects, files: [...Object.keys(generated), ...copied] };

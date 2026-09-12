@@ -163,6 +163,35 @@ test('the 404 page is noindex and routes back to the hub', () => {
   assert.ok(out.includes('href="/"'));
 });
 
+test('the page carries a local icon set, not a third-party avatar', () => {
+  assert.ok(html.includes('<link rel="icon" href="/favicon.ico" sizes="32x32">'));
+  assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
+  assert.ok(html.includes('<link rel="apple-touch-icon" href="/apple-touch-icon.png">'));
+  assert.ok(html.includes('<link rel="manifest" href="/site.webmanifest">'));
+  // the avatar may still be used for the <img>, but must not be the favicon
+  assert.doesNotMatch(html, /<link rel="icon"[^>]*avatars\.githubusercontent\.com/);
+});
+
+test('both colour schemes are declared so dark mode does not flash white', () => {
+  assert.ok(html.includes('<meta name="color-scheme" content="light dark">'));
+  assert.ok(html.includes('content="#ffffff" media="(prefers-color-scheme: light)"'));
+  assert.ok(html.includes('content="#0d1117" media="(prefers-color-scheme: dark)"'));
+});
+
+test('the social card is fully described for scrapers that need dimensions', () => {
+  assert.ok(html.includes('<meta property="og:site_name" content="xsavikx.github.io">'));
+  assert.ok(html.includes('<meta property="og:image:width" content="1200">'));
+  assert.ok(html.includes('<meta property="og:image:height" content="630">'));
+  assert.match(html, /<meta property="og:image:alt" content="[^"]+">/);
+  assert.match(html, /<meta name="twitter:image:alt" content="[^"]+">/);
+});
+
+test('the 404 page carries the same icon identity', () => {
+  const out = render404(template404);
+  assert.ok(out.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
+  assert.ok(out.includes('<meta name="color-scheme" content="light dark">'));
+});
+
 test('rendering is deterministic for a fixed now', () => {
   assert.equal(html, renderIndex({ template: indexTemplate, owner, projects, now: NOW }));
 });
