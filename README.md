@@ -66,6 +66,11 @@ This repo has no `node_modules` and no `dependencies` or `devDependencies` at al
 and nothing to audit for supply-chain risk — that tradeoff is intentional for a small,
 low-churn static site, not an oversight.
 
+## Architecture
+
+`docs/ARCHITECTURE.md` covers the module layout, how the project list is
+discovered, the sitemap index routing rule, and the constraints worth preserving.
+
 ## Deployment
 
 `.github/workflows/deploy.yml` runs on push to `main`, on a weekly schedule (so a newly
