@@ -37,7 +37,7 @@ owner's public, non-fork, non-archived repositories that have GitHub Pages enabl
 turns each one into a card and a set of SEO/LLM-discovery entries.
 
 **When a new project site is published, this repo needs no edit.** The next build
-(triggered by push, the weekly schedule, or a manual dispatch — see
+(triggered by push, the daily schedule, or a manual dispatch — see
 `.github/workflows/deploy.yml`) will discover it via the GitHub API and add it
 automatically. The same is true in reverse: archive or unpublish Pages on a repo and it
 drops out of the next build.
@@ -73,7 +73,7 @@ discovered, the sitemap index routing rule, and the constraints worth preserving
 
 ## Deployment
 
-`.github/workflows/deploy.yml` runs on push to `main`, on a weekly schedule (so a newly
+`.github/workflows/deploy.yml` runs on push to `main`, on a daily schedule (so a newly
 published project site shows up even without a push to this repo), and on manual
 dispatch. It runs `npm test` then `npm run build` on Node 24, then publishes `dist/` to
 GitHub Pages via `actions/deploy-pages`.

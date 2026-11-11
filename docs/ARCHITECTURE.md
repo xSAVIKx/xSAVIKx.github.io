@@ -98,7 +98,7 @@ removes item counts and positions from VoiceOver.
 ## Deployment
 
 `.github/workflows/deploy.yml` runs `npm test`, then `npm run build`, then
-publishes `dist/`. It triggers on push to `main`, on a weekly cron so newly
+publishes `dist/`. It triggers on push to `main`, on a daily cron so newly
 published project sites appear without a push here, and on manual dispatch.
 Nothing generated is ever committed — `dist/` is gitignored.
 

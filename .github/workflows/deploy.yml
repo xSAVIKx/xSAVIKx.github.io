@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   schedule:
-    # Weekly, so a newly published project site appears without a push.
-    - cron: '17 4 * * 1'
+    # Daily, so a newly published project site appears within a day without a push.
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
