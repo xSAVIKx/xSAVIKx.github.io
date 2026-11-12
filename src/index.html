@@ -5,20 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{TITLE}}</title>
 <meta name="description" content="{{DESCRIPTION}}">
+<meta name="author" content="{{NAME}}">
+<meta name="keywords" content="{{KEYWORDS}}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="google-site-verification" content="sMLPKoYMB5EoPQiOfUJ51P7xLG55OXBKV9PTEvp2HPw">
 <link rel="canonical" href="{{ORIGIN}}/">
-<meta property="og:type" content="website">
+<link rel="author" href="{{PRIMARY}}">
+<meta property="og:type" content="profile">
+<meta property="profile:username" content="{{LOGIN}}">
+<meta property="og:locale" content="en_US">
 <meta property="og:title" content="{{TITLE}}">
 <meta property="og:description" content="{{DESCRIPTION}}">
 <meta property="og:url" content="{{ORIGIN}}/">
 <meta property="og:site_name" content="{{HOST}}">
+<meta property="og:updated_time" content="{{BUILT_ISO}}">
 <meta property="og:image" content="{{ORIGIN}}/og.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Yurii Serhiichuk — open-source projects">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
 <meta name="twitter:image" content="{{ORIGIN}}/og.png">
 <meta name="twitter:image:alt" content="Yurii Serhiichuk — open-source projects">
+{{TWITTER_META}}
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -26,20 +37,26 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://avatars.githubusercontent.com">
 <link rel="stylesheet" href="/styles.css">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+<link rel="alternate" type="text/plain" href="/llms-full.txt" title="llms-full.txt">
 <script type="application/ld+json">{{JSONLD}}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="wrap">
 <header class="hero">
-  <img class="avatar" src="{{AVATAR}}" alt="" width="96" height="96">
-  <h1>{{NAME}}</h1>
-  <p class="bio">{{BIO}}</p>
-  <nav aria-label="Elsewhere">
-    <ul class="links" role="list">{{LINKS}}</ul>
-  </nav>
+  <img class="avatar" src="{{AVATAR}}" alt="" width="128" height="128" fetchpriority="high">
+  <div class="intro">
+    <h1>{{NAME}}</h1>
+    <p class="bio">{{BIO}}</p>
+    <nav aria-label="Elsewhere">
+      <ul class="links" role="list">{{LINKS}}</ul>
+    </nav>
+  </div>
+  <ul class="stats" role="list" aria-label="At a glance">{{STATS}}</ul>
 </header>
 <main id="main" tabindex="-1">
   <h2>Project sites</h2>
@@ -49,7 +66,8 @@
   <p>These are the GitHub Pages sites published under <code>{{HOST}}</code>.
      This index is generated from the GitHub API —
      <a href="https://github.com/xSAVIKx/xSAVIKx.github.io">source</a>.
-     Last built {{BUILT}}.</p>
+     For agents: <a href="/llms.txt">llms.txt</a>.
+     Last built <time datetime="{{BUILT_ISO}}">{{BUILT}}</time>.</p>
 </footer>
 </div>
 </body>

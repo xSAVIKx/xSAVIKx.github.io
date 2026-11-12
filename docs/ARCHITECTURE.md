@@ -11,6 +11,7 @@ handful of files into `dist/`, and a workflow publishes that to GitHub Pages.
 | `scripts/lib/discover.mjs` | GitHub API paging, repo filtering, URL normalization, asset probing |
 | `scripts/lib/render-seo.mjs` | `robots.txt`, sitemap index and urlset, `llms.txt`, `llms-full.txt` |
 | `scripts/lib/render-html.mjs` | `index.html`, `404.html`, JSON-LD, HTML escaping |
+| `scripts/lib/render-art.mjs` | Generated SVG card art, seeded by repo name and tinted by language |
 | `scripts/build.mjs` | Orchestrates discover → enrich → render → write `dist/` |
 | `scripts/verify.mjs` | Post-build checks, including live URL fetches |
 | `src/` | Templates, stylesheet, icons — copied or filled, never generated |
@@ -61,6 +62,25 @@ both documents is same-origin, as the sitemap protocol requires.
 
 `llms.txt` follows the same probe: a project that publishes its own is linked to
 it, so an agent can descend.
+
+## Card art
+
+Each card has a small inline SVG strip. Project OG images are 1200x630, too
+heavy for a card grid, and the zero-dependency rule excludes an image library to
+shrink them. `render-art.mjs` draws the art instead: a shape pattern seeded by
+the repository name, tinted by the GitHub language colour, with a two-letter
+badge. The same name always gives the same art, and a new project gets art with
+no work. The art is `aria-hidden`; the card title names the project.
+`test/render-art.test.mjs` checks the badge letters for 4.5:1 contrast on every
+language colour.
+
+## Structured data
+
+The JSON-LD graph has a `Person`, a `WebSite`, and the page itself as both
+`ProfilePage` and `CollectionPage`. The page's `hasPart` is an `ItemList` where
+each item is a `SoftwareSourceCode` with its repository, language, topics and
+author. `knowsAbout` on the person comes from the project languages and topics.
+Profile links carry `rel="me"`.
 
 ## Constraints worth preserving
 

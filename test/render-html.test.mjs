@@ -139,17 +139,63 @@ test('fill leaves unknown slots untouched rather than erasing them', () => {
   assert.equal(fill('x {{A}} {{B}}', { A: '1' }), 'x 1 {{B}}');
 });
 
-test('JSON-LD parses and describes a Person and the project list', () => {
+test('JSON-LD parses and describes a Person, the site, and the project list', () => {
   const raw = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1];
   const data = JSON.parse(raw);
-  const types = data['@graph'].map((n) => n['@type']);
-  assert.ok(types.includes('Person'));
-  assert.ok(types.includes('CollectionPage'));
+  const types = data['@graph'].flatMap((n) => [n['@type']].flat());
+  for (const t of ['Person', 'WebSite', 'ProfilePage', 'CollectionPage']) {
+    assert.ok(types.includes(t), `no ${t} node`);
+  }
   const person = data['@graph'].find((n) => n['@type'] === 'Person');
   assert.equal(person.name, 'Yurii Serhiichuk');
+  assert.equal(person.alternateName, 'xSAVIKx');
   assert.ok(person.sameAs.includes('https://serhiichuk.dev/'));
-  const list = data['@graph'].find((n) => n['@type'] === 'CollectionPage').mainEntity;
+  assert.ok(person.knowsAbout.includes('Go'));
+  const page = data['@graph'].find((n) => [n['@type']].flat().includes('ProfilePage'));
+  assert.equal(page.mainEntity['@id'], person['@id']);
+  assert.equal(page.dateModified, NOW.toISOString());
+  const list = page.hasPart;
   assert.equal(list.numberOfItems, projects.length);
+  for (const [i, entry] of list.itemListElement.entries()) {
+    assert.equal(entry.item['@type'], 'SoftwareSourceCode');
+    assert.equal(entry.item.codeRepository, projects[i].repoUrl);
+    assert.equal(entry.item.author['@id'], person['@id']);
+  }
+});
+
+test('profile links carry rel="me" so the identities connect', () => {
+  assert.ok(html.includes('href="https://serhiichuk.dev/" rel="me"'));
+  assert.ok(html.includes('href="https://github.com/xSAVIKx" rel="me"'));
+});
+
+test('the page names its author and the X account for social cards', () => {
+  assert.ok(html.includes('<meta name="author" content="Yurii Serhiichuk">'));
+  assert.ok(html.includes('<meta name="twitter:creator" content="@xSAVIKx">'));
+  assert.ok(html.includes('<meta property="og:type" content="profile">'));
+});
+
+test('without an X account no twitter:creator tag is emitted', () => {
+  const out = renderIndex({ template: indexTemplate, owner: { ...owner, twitter: null }, projects, now: NOW });
+  assert.ok(!out.includes('twitter:creator'));
+  assert.doesNotMatch(out, /\{\{[A-Z_]+\}\}/);
+});
+
+test('the description states the project count, so a snippet answers by itself', () => {
+  assert.match(html, new RegExp(`<meta name="description" content="${projects.length} open-source project sites`));
+});
+
+test('the avatar is requested at the size it is shown, not the 460px default', () => {
+  assert.match(html, /<img class="avatar" src="[^"]*[?&]amp;s=256"|<img class="avatar" src="[^"]*s=256"/);
+});
+
+test('every card carries decorative art hidden from assistive technology', () => {
+  assert.equal((html.match(/<svg class="art"[^>]*aria-hidden="true"/g) ?? []).length, projects.length);
+});
+
+test('the stats line counts projects and stars', () => {
+  const stars = projects.reduce((n, p) => n + p.stars, 0);
+  assert.ok(html.includes(`<strong>${projects.length}</strong> project sites`));
+  assert.ok(html.includes(`<strong>${stars}</strong> stars`));
 });
 
 test('JSON-LD escapes any closing script tag in the data', () => {
