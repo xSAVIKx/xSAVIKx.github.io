@@ -1,6 +1,6 @@
 import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE } from './discover.mjs';
 import { isoDate } from './render-seo.mjs';
-import { renderArt } from './render-art.mjs';
+import { renderArt, languageColor } from './render-art.mjs';
 
 export function htmlEscape(s) {
   return String(s)
@@ -25,13 +25,28 @@ export function renderCardImage(p) {
   return `<img class="art" src="${htmlEscape(p.card)}" alt="" width="320" height="96" loading="lazy" decoding="async">`;
 }
 
-export function renderCards(projects) {
-  return projects.map((p) => {
-    const meta = [
-      p.language,
-      `${p.stars} ${p.stars === 1 ? 'star' : 'stars'}`,
-    ].filter(Boolean).map((m) => `<li>${htmlEscape(m)}</li>`).join('')
-      + `<li>Updated <time datetime="${isoDate(p.pushedAt)}">${isoDate(p.pushedAt)}</time></li>`;
+/**
+ * The project to feature: the one with the most stars, the newest on a tie.
+ * It moves to the front; the others keep their order (most recently pushed first).
+ */
+export function featureFirst(projects) {
+  if (projects.length < 2) return projects;
+  const top = projects.reduce((best, p) => (p.stars > best.stars ? p : best));
+  return [top, ...projects.filter((p) => p !== top)];
+}
+
+export function renderCards(projects, { featured = false } = {}) {
+  return projects.map((p, i) => {
+    const eyebrow = featured && i === 0 ? '<p class="eyebrow">Most starred</p>' : '';
+    // A coloured dot names the language at a glance; the word beside it carries the meaning.
+    const lang = p.language
+      ? `<li><svg class="dot" viewBox="0 0 8 8" aria-hidden="true" focusable="false"><circle cx="4" cy="4" r="4" fill="${languageColor(p.language)}"/></svg>${htmlEscape(p.language)}</li>`
+      : '';
+    // Zero stars is noise, so the item shows only when there is something to count.
+    const stars = p.stars > 0
+      ? `<li>${p.stars.toLocaleString('en-US')} ${p.stars === 1 ? 'star' : 'stars'}</li>`
+      : '';
+    const meta = `${lang}${stars}<li>Updated <time datetime="${isoDate(p.pushedAt)}">${isoDate(p.pushedAt)}</time></li>`;
 
     const topicItems = p.topics
       .slice(0, TOPIC_CAP)
@@ -52,11 +67,15 @@ export function renderCards(projects) {
     return `
       <li class="card">
         ${renderCardImage(p)}
-        <h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
-        <p>${htmlEscape(p.description || 'No description provided.')}</p>
-        ${topics}
-        <ul class="meta" role="list">${meta}</ul>
-        <p class="also">${also}</p>
+        <div class="body">
+          ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
+          <p>${htmlEscape(p.description || 'No description provided.')}</p>
+          ${topics}
+        </div>
+        <div class="side">
+          <ul class="meta" role="list">${meta}</ul>
+          <p class="also">${also}</p>
+        </div>
       </li>`;
   }).join('');
 }
@@ -178,7 +197,7 @@ function renderStats(projects) {
   const items = [
     `<li><strong>${projects.length}</strong> project ${projects.length === 1 ? 'site' : 'sites'}</li>`,
     `<li><strong>${stars.toLocaleString('en-US')}</strong> ${stars === 1 ? 'star' : 'stars'}</li>`,
-    ...(langs.length ? [`<li>${langs.map(htmlEscape).join(', ')}</li>`] : []),
+    ...(langs.length ? [`<li title="${langs.map(htmlEscape).join(', ')}"><strong>${langs.length}</strong> ${langs.length === 1 ? 'language' : 'languages'}</li>`] : []),
   ];
   return items.join('');
 }
@@ -207,7 +226,7 @@ export function renderIndex({ template, owner, projects, now }) {
     AVATAR: htmlEscape(sizedAvatar(owner.avatar, 256)),
     LINKS: renderLinks(owner),
     STATS: renderStats(projects),
-    CARDS: renderCards(projects),
+    CARDS: renderCards(featureFirst(projects), { featured: true }),
     JSONLD: renderJsonLd(owner, projects, now),
     BUILT: isoDate(now),
     BUILT_ISO: new Date(now).toISOString(),

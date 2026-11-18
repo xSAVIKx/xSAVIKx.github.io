@@ -72,45 +72,33 @@ export function monogram(name) {
 
 const W = 320;
 const H = 96;
-const CELL = 16;
-
-/** One shape inside a CELL x CELL square at (x, y). */
-function shape(kind, x, y) {
-  const c = CELL / 2;
-  switch (kind) {
-    case 0: return `<circle cx="${x + c}" cy="${y + c}" r="5"/>`;
-    case 1: return `<rect x="${x + 3}" y="${y + 3}" width="10" height="10" rx="2"/>`;
-    case 2: return `<path d="M${x + 2} ${y + 14}L${x + c} ${y + 2}L${x + 14} ${y + 14}Z"/>`;
-    default: return `<path d="M${x + 2} ${y + 2}L${x + 14} ${y + 14}M${x + 14} ${y + 2}L${x + 2} ${y + 14}" stroke-width="2.5" fill="none"/>`;
-  }
-}
+const BAR = 8;
+const GAP = 4;
 
 export function renderArt(project) {
   const color = languageColor(project.language);
   const rand = rng(hash(project.name));
 
-  // Each project uses two of the four shape kinds, so cards differ in texture
-  // and not only in layout.
-  const kinds = [Math.floor(rand() * 4)];
-  kinds.push((kinds[0] + 1 + Math.floor(rand() * 3)) % 4);
-  const density = 0.35 + rand() * 0.25;
-
-  const shapes = [];
-  // The left part stays clear for the badge.
-  for (let y = 0; y < H; y += CELL) {
-    for (let x = 96; x < W; x += CELL) {
-      if (rand() > density) continue;
-      // Opacity fades in from the left, so the badge edge stays calm.
-      const fade = Math.min(1, (x - 96) / 96);
-      const o = (0.15 + rand() * 0.45) * (0.35 + 0.65 * fade);
-      shapes.push(`<g opacity="${o.toFixed(2)}">${shape(kinds[Math.floor(rand() * 2)], x, y)}</g>`);
-    }
+  // A bar chart drawn by a seeded random walk: it reads as a latency histogram,
+  // and each name gets its own skyline. The left part stays clear for the badge.
+  const bars = [];
+  let level = 0.25 + rand() * 0.5;
+  for (let x = 100; x + BAR <= W; x += BAR + GAP) {
+    level = Math.min(0.95, Math.max(0.12, level + (rand() - 0.5) * 0.45));
+    const h = Math.round(level * (H - 16));
+    // Opacity fades in from the left, so the badge edge stays calm.
+    const fade = Math.min(1, (x - 100) / 120);
+    const o = (0.25 + 0.5 * fade) * (rand() > 0.82 ? 1.3 : 1);
+    bars.push(`<rect x="${x}" y="${H - h}" width="${BAR}" height="${h}" rx="2" opacity="${Math.min(0.9, o).toFixed(2)}"/>`);
   }
+  // One dashed line across the chart, like an alert threshold.
+  const line = 20 + Math.round(rand() * 30);
 
   const letters = monogram(project.name);
-  return `<svg class="art" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid slice" aria-hidden="true" focusable="false">`
-    + `<rect width="${W}" height="${H}" fill="${color}" opacity="0.14"/>`
-    + `<g fill="${color}" stroke="${color}">${shapes.join('')}</g>`
+  return `<svg class="art" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMax slice" aria-hidden="true" focusable="false">`
+    + `<rect width="${W}" height="${H}" fill="${color}" opacity="0.12"/>`
+    + `<g fill="${color}">${bars.join('')}</g>`
+    + `<path d="M100 ${line}H${W}" stroke="${color}" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.6"/>`
     + `<rect x="20" y="20" width="56" height="56" rx="12" fill="${color}"/>`
     + `<text x="48" y="49" text-anchor="middle" dominant-baseline="central" class="mono" fill="${badgeTextColor(color)}">${letters}</text>`
     + '</svg>';
