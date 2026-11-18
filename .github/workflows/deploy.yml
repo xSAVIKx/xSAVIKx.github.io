@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The quality gate: a broken page stops here, before the upload.
+      - run: npm run check
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

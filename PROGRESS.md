@@ -14,12 +14,13 @@ H4 identity v1.1, H7 release feed and Atom.
 - H8: `src/site-verification.json` and meta tag rendering, tests, docs. Operator steps:
   `night-run/H8-search-console.md`.
 - H2: audit and one fix (featured card art no longer lazy). Report: `night-run/H2-audit.md`.
+- H1: `scripts/check-dist.mjs` (56 offline checks, size budgets), `npm run check` in deploy.yml
+  before the upload, new `check.yml` (branch and PR: tests, build, gate, Lighthouse CI 0.15.1),
+  `lighthouserc.json`, tests in `test/check-dist.test.mjs`. Report: `night-run/H1-ci-gate.md`.
 
 ## Next
 
-- H1: CI quality gate. A check job that runs on pull requests and on non-main branches, and the
-  same checks before the deploy: tests, identity check, built HTML checks (links, JSON-LD, no
-  unfilled slots).
+- H4: identity v1.1 (focus ring and link rules, reduced motion, print, footer snippet) with previews.
 
 ## Blocked
 

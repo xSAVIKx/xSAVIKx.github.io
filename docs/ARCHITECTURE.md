@@ -164,6 +164,25 @@ Lists that are visually de-bulleted carry an explicit `role="list"`: WebKit drop
 the list role when `list-style: none` is applied, which otherwise silently
 removes item counts and positions from VoiceOver.
 
+## Quality gate
+
+`npm run check` (`scripts/check-dist.mjs`) reads a built `dist/` and fails on:
+an unfilled `{{SLOT}}`, a missing local file or asset, an image without `alt`,
+width or height, an `http://` URL, JSON-LD that does not parse or lacks Person,
+WebSite or ProfilePage, a project count in `projects.json` that differs from
+the cards, a sitemap URL on another origin, and a file over its size budget
+(`BUDGETS`). It reads files only, so it gives the same result on every run.
+
+- `deploy.yml` runs it after the build and before the upload. A failed check
+  stops the deploy, also for the daily scheduled build.
+- `check.yml` runs the tests, the build and the gate on every branch push and
+  pull request, then Lighthouse CI (`lighthouserc.json`). Accessibility and SEO
+  must be 100, best practices 95 or more, and CLS 0.05 or less. Performance
+  below 90 and LCP above 2.5 s give a warning only, because the score depends
+  on the runner. Raise them to `error` after some stable runs.
+- `scripts/verify.mjs` is a different tool: it fetches the live URLs after a
+  deploy.
+
 ## Deployment
 
 `.github/workflows/deploy.yml` runs `npm test`, then `npm run build`, then
