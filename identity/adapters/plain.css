@@ -1,3 +1,14 @@
 /* Adapter: a hand-written site. The page keeps its own accent, header and art. */
 body { background: var(--ys-bg); color: var(--ys-text); font-family: var(--ys-font-sans); }
 code, pre, kbd, samp { font-family: var(--ys-font-mono); }
+/* Focus ring (since 1.1.0). Set --ys-focus-color to the accent of the site. The fallback is the text colour.
+ * A more specific rule of the site, for example a:focus-visible, wins over this rule. */
+:focus-visible { outline: var(--ys-focus-width) solid var(--ys-focus-color, var(--ys-text)); outline-offset: var(--ys-focus-offset); }
+/* Links (since 1.1.0): where a link has an underline, this sets its offset and thickness. It adds no underline. */
+:where(a) { text-underline-offset: var(--ys-underline-offset); text-decoration-thickness: var(--ys-underline-thickness); }
+@media print {
+  /* Navigation and decorative art do not help on paper. */
+  nav, img[alt=""], svg[aria-hidden="true"] { display: none !important; }
+  /* Paper has no link target: show the address after a body-text link. */
+  :where(p, li, dd, blockquote, figcaption) a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; overflow-wrap: anywhere; }
+}

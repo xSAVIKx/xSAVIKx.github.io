@@ -1,4 +1,4 @@
-/*! ys-tokens 1.0.0 ys-tokens.css sha256:7422f73c09d427f7
+/*! ys-tokens 1.1.0 ys-tokens.css sha256:3f441e3261bb50c5
  * Shared identity of Yurii Serhiichuk's web properties: neutrals, fonts, spacing.
  * Generated from https://github.com/xSAVIKx/xSAVIKx.github.io/tree/main/identity. Do not edit.
  * Source: https://xsavikx.github.io/identity/ys-tokens.css
@@ -34,6 +34,9 @@
   --ys-radius-pill: 999px;
   --ys-tap: 44px;
   --ys-focus-width: 3px;
+  --ys-focus-offset: 2px;
+  --ys-underline-offset: 0.2em;
+  --ys-underline-thickness: max(1px, 0.0625em);
 }
 /* Dark: the system asks for dark and the page did not pin light. */
 @media (prefers-color-scheme: dark) {
@@ -66,3 +69,19 @@
   --ys-on-accent: #ffffff;
 }
 :root[data-theme="light"] { color-scheme: light; }
+/* Print: white paper, black text. A dark page prints with the light colours. */
+@media print {
+  :root, :root:not([data-theme="light"]), :root[data-theme="dark"] {
+    color-scheme: light;
+    --ys-bg: #ffffff;
+    --ys-surface: #ffffff;
+    --ys-surface-2: #f1f5f9;
+    --ys-text: #000000;
+    --ys-muted: #475569;
+    --ys-border: #e2e8f0;
+    --ys-border-strong: #64748b;
+    --ys-accent: #1d4ed8;
+    --ys-accent-solid: #2563eb;
+    --ys-on-accent: #ffffff;
+  }
+}

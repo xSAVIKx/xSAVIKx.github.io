@@ -13,3 +13,7 @@
   --md-code-font-family: var(--ys-font-mono);
 }
 body, input { font-family: var(--ys-font-sans); }
+/* Focus (since 1.1.0): no rule. Material draws the ring in the accent of the project.
+ * Print and reduced motion: Material has its own rules. The identity adds only the print colours. */
+/* Footer line: the Material footer is dark in both schemes, so the line uses the footer colours and sizes. */
+.md-footer .ys-footer-line { color: var(--md-footer-fg-color--light); font-size: 0.64rem; }

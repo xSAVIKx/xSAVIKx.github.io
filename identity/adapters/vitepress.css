@@ -18,3 +18,13 @@
   --vp-font-family-mono: var(--ys-font-mono);
 }
 .VPFeature { border: 1px solid var(--ys-border); border-radius: var(--ys-radius-lg); }
+/* Focus (since 1.1.0): no rule. VitePress shows the focus ring of the browser on links and on buttons.
+ * Reduced motion: VitePress has its own rule. Links: VitePress has its own underline rules. */
+@media print {
+  /* The fixed navigation prints on each sheet. Hide the navigation chrome. The page text stays. */
+  .VPNav, .VPLocalNav, .VPSidebar, .VPDocAside { display: none !important; }
+  /* The dark brand colour is too light on white paper. A body-text link and inline code print in the text colour. The link keeps its underline. */
+  .vp-doc a, .vp-doc :not(pre) > code { color: inherit; }
+  /* VitePress pins the dark canvas with html.dark. Paper is light. */
+  html.dark { color-scheme: light; }
+}

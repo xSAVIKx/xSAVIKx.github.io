@@ -142,3 +142,13 @@ footer a { padding: 0.9375rem 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Print (identity 1.1): white paper, black text, no decorative art, and the address after each link. */
+@media print {
+  :root { --bg: #ffffff; --surface: #ffffff; --text: #000000; --muted: #475569; --accent: #1d4ed8; --border: #e2e8f0; }
+  body { padding: 0; }
+  .skip, .avatar, .art, .dot { display: none; }
+  .card { break-inside: avoid; }
+  .links a, .card h3 a, .also a { min-height: 0; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; overflow-wrap: anywhere; }
+}

@@ -6,3 +6,9 @@ body { background: var(--ys-bg); color: var(--ys-text); font-family: var(--ys-fo
 .main-content blockquote { color: var(--ys-muted); border-left-color: var(--ys-border-strong); }
 .main-content table th, .main-content table td { border-color: var(--ys-border); }
 .site-footer { border-top-color: var(--ys-border); color: var(--ys-muted); }
+/* Focus ring (since 1.1.0). Cayman has no focus rule of its own. Set --ys-focus-color to the accent of the project. */
+:focus-visible { outline: var(--ys-focus-width) solid var(--ys-focus-color, var(--ys-text)); outline-offset: var(--ys-focus-offset); }
+@media print {
+  /* Only the page body. The header stays the project's own, on paper also. */
+  .main-content a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; overflow-wrap: anywhere; }
+}

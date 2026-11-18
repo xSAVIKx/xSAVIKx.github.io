@@ -1,4 +1,4 @@
-/*! ys-tokens 1.0.0 ys-mkdocs-material.css sha256:14c61ec20c033fae
+/*! ys-tokens 1.1.0 ys-mkdocs-material.css sha256:c33448756b951b5a
  * Shared identity of Yurii Serhiichuk's web properties: neutrals, fonts, spacing.
  * Generated from https://github.com/xSAVIKx/xSAVIKx.github.io/tree/main/identity. Do not edit.
  * Source: https://xsavikx.github.io/identity/ys-mkdocs-material.css
@@ -33,6 +33,9 @@
   --ys-radius-pill: 999px;
   --ys-tap: 44px;
   --ys-focus-width: 3px;
+  --ys-focus-offset: 2px;
+  --ys-underline-offset: 0.2em;
+  --ys-underline-thickness: max(1px, 0.0625em);
 }
 /* Dark: the page pinned dark. */
 [data-md-color-scheme="slate"] {
@@ -47,6 +50,35 @@
   --ys-accent: #6ea8ff;
   --ys-accent-solid: #2563eb;
   --ys-on-accent: #ffffff;
+}
+/* Print: white paper, black text. A dark page prints with the light colours. */
+@media print {
+  :root, [data-md-color-scheme="default"], [data-md-color-scheme="slate"] {
+    color-scheme: light;
+    --ys-bg: #ffffff;
+    --ys-surface: #ffffff;
+    --ys-surface-2: #f1f5f9;
+    --ys-text: #000000;
+    --ys-muted: #475569;
+    --ys-border: #e2e8f0;
+    --ys-border-strong: #64748b;
+    --ys-accent: #1d4ed8;
+    --ys-accent-solid: #2563eb;
+    --ys-on-accent: #ffffff;
+  }
+}
+
+/* Shared rules (since 1.1.0). Each adapter bundle has them. They are safe on every stack. */
+/* Footer line: the link to the hub. Opt-in: it applies only where a page uses the class. */
+.ys-footer-line { display: block; margin: var(--ys-space-4) 0 0; color: var(--ys-muted); font: 0.8125rem/1.5 var(--ys-font-sans); }
+.ys-footer-line a { color: inherit; text-decoration: underline; text-underline-offset: var(--ys-underline-offset); text-decoration-thickness: var(--ys-underline-thickness); }
+/* Reduced motion: no smooth scroll. The identity adds no animation and no transition of its own. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+}
+@media print {
+  .ys-footer-line a[href^="http"]::after { content: " (" attr(href) ")"; }
+  .ys-print-hide { display: none !important; }
 }
 
 /* Adapter: MkDocs Material 9. Load with extra_css and set theme.font: false.
@@ -64,3 +96,7 @@
   --md-code-font-family: var(--ys-font-mono);
 }
 body, input { font-family: var(--ys-font-sans); }
+/* Focus (since 1.1.0): no rule. Material draws the ring in the accent of the project.
+ * Print and reduced motion: Material has its own rules. The identity adds only the print colours. */
+/* Footer line: the Material footer is dark in both schemes, so the line uses the footer colours and sizes. */
+.md-footer .ys-footer-line { color: var(--md-footer-fg-color--light); font-size: 0.64rem; }

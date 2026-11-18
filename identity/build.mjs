@@ -45,7 +45,18 @@ export function tokensCss(t, kind) {
   }
   if (s.dark) out += `/* Dark: the page pinned dark. */\n${s.dark} {\n  color-scheme: dark;\n${colors(t, 'dark', '  ')}\n}\n`;
   if (kind === 'generic') out += ':root[data-theme="light"] { color-scheme: light; }\n';
+  out += printCss(t, kind);
   return out;
+}
+
+/** Print uses the light colours with the replacements from tokens.print, also when the page pinned dark. */
+export function printCss(t, kind) {
+  const s = SCHEMES[kind];
+  const selectors = [s.light, s.darkMedia, s.dark].filter(Boolean).join(', ');
+  const lines = Object.keys(t.color)
+    .map((k) => `    --ys-${k}: ${t.print[k] ?? t.color[k].light};`).join('\n');
+  return '/* Print: white paper, black text. A dark page prints with the light colours. */\n'
+    + `@media print {\n  ${selectors} {\n    color-scheme: light;\n${lines}\n  }\n}\n`;
 }
 
 /** The stamp names the version and a hash of the body, so a vendored copy shows if it drifted. */
@@ -60,8 +71,10 @@ export function stamp(t, name, body) {
 export function renderBundles(t = loadTokens()) {
   const files = {};
   for (const [name, kind, adapter] of BUNDLES) {
-    const body = tokensCss(t, kind)
-      + (adapter ? `\n${readFileSync(here(`./adapters/${adapter}.css`), 'utf8')}` : '');
+    // An adapter bundle is: the variables, the shared rules, then the rules of the stack.
+    const body = tokensCss(t, kind) + (adapter
+      ? `\n${readFileSync(here('./adapters/_shared.css'), 'utf8')}\n${readFileSync(here(`./adapters/${adapter}.css`), 'utf8')}`
+      : '');
     files[name] = stamp(t, name, body) + body;
   }
   return files;

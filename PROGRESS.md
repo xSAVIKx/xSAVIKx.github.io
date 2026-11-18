@@ -18,10 +18,16 @@ H4 identity v1.1, H7 release feed and Atom.
   before the upload, new `check.yml` (branch and PR: tests, build, gate, Lighthouse CI 0.15.1),
   `lighthouserc.json`, tests in `test/check-dist.test.mjs`. Report: `night-run/H1-ci-gate.md`.
 
+- H4: identity 1.1.0 (focus ring, link underline, reduced motion, print, `.ys-footer-line`), 10 new
+  tests (128 pass). Report and 3 open design questions: `night-run/H4-identity-v1.1.md`.
+  Preview: `night-run/H4-preview.html`.
+
 ## Next
 
-- H4: identity v1.1 (focus ring and link rules, reduced motion, print, footer snippet) with previews.
+- H7: release feed on the hub and an Atom feed.
 
 ## Blocked
 
+- H4: a design review by the operator (3 questions in night-run/H4-identity-v1.1.md). The project
+  sites keep 1.0.0 until the operator approves 1.1.0.
 - H8: the operator must check Google Search Console and add Bing (see night-run/H8-search-console.md).
