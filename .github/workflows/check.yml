@@ -53,4 +53,6 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci
+          # The folder name starts with a dot, and upload-artifact skips hidden files by default.
+          include-hidden-files: true
           retention-days: 7

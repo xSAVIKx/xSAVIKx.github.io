@@ -18,6 +18,11 @@
   style and layout took 3.1 s for 209 elements. So the p1 number is not valid. Performance and LCP
   are `warn` until the GitHub runner gives stable numbers.
 
+- First GitHub run (44378651526, 2026-11-18 19:16 UTC): gate 56/56, Lighthouse CI passed all
+  assertions with no warning, so performance was 90 or more and LCP 2.5 s or less on the runner.
+  The report upload was empty because `upload-artifact@v4` skips the hidden `.lighthouseci` folder.
+  Fixed with `include-hidden-files: true`.
+
 ## For the operator
 
 - A push of this branch runs `check.yml` on GitHub. Look at the Lighthouse step and its artifact.
@@ -27,4 +32,4 @@
 ## What I did not check
 
 - The workflows on GitHub before this push. I did not run them with `act`.
-- Lighthouse numbers on a GitHub runner.
+- The exact Lighthouse numbers on the runner (the first run did not upload them).
