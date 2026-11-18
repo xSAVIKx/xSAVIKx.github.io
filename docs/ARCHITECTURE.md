@@ -46,6 +46,19 @@ generates governs every project site published beneath that origin.
 The generated file allows everything, for `*` and for named AI crawlers, and
 carries a single `Sitemap:` directive.
 
+## Order and featured projects
+
+`src/featured.json` names the projects to show first, in that order, as
+Featured cards. Edit that file to change the selection; a name that matches no
+project site prints a warning in the build log. The other projects follow by
+activity: human commits on the default branch in the last 90 days, then the date
+of the last human commit. Bot commits (Dependabot, github-actions) do not count,
+so a dependency update does not make an old project look active. The "Updated"
+date on a card is the last human commit for the same reason.
+
+The count reads up to 5 pages of 100 commits for each project; past that, the
+count is a floor. An empty repository counts as zero.
+
 ## Sitemap routing
 
 `/sitemap.xml` is a sitemap **index**, not a flat list of URLs. At build time
@@ -74,7 +87,8 @@ no work. The art is `aria-hidden`; the card title names the project.
 
 A project can replace the generated art with a hand-made image. The build
 probes the site root for `card.svg`, then `card.webp`, then `card.png`, and
-uses the first file that exists. The image shows at a 10:3 ratio and is cropped
+uses the first file that exists. If the site has none, the build uses
+`src/cards/<repo>.svg` from this repository when that file exists. The image shows at a 10:3 ratio and is cropped
 to fit; 640x192 suits a raster file. Keep the left 30% calm if text or a mark
 must stay visible on narrow cards.
 `test/render-art.test.mjs` checks the badge letters for 4.5:1 contrast on every

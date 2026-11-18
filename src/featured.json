@@ -1,0 +1,4 @@
+{
+  "_comment": "Project sites to show first, in this order, as wide Featured cards. Use repository names. The other sites follow by activity. See docs/ARCHITECTURE.md.",
+  "featured": ["aws-emulator-docker", "cloud-cache-action"]
+}

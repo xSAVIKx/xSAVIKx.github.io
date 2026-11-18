@@ -18,6 +18,14 @@ function fakeFetch(overrides = {}) {
         ? { ok: true, status: 200 }
         : { ok: false, status: 404 };
     }
+    const commits = String(url).match(/\/repos\/xSAVIKx\/([^/]+)\/commits/);
+    if (commits) {
+      const human = { author: { login: 'xSAVIKx', type: 'User' }, commit: { committer: { date: '2026-09-01T00:00:00Z' } } };
+      const bot = { author: { login: 'dependabot[bot]', type: 'Bot' }, commit: { committer: { date: '2026-09-10T00:00:00Z' } } };
+      const recent = { 'cloud-cache-action': [human, human, human], 'okf-skills': [human, human, human, human, human] };
+      const body = String(url).includes('since=') ? (recent[commits[1]] ?? [bot]) : [bot, human];
+      return { ok: true, status: 200, json: async () => body };
+    }
     if (String(url).includes('/users/xSAVIKx/repos')) {
       const body = overrides.repos ?? repos;
       return { ok: true, status: 200, json: async () => body };
@@ -36,18 +44,22 @@ test('writes the full set of artifacts', async () => {
   await build({ fetchFn: fakeFetch(), now: NOW, outDir: dir });
   const written = (await readdir(dir)).sort();
   assert.deepEqual(written, [
-    '404.html', 'apple-touch-icon.png', 'favicon.ico', 'favicon.svg',
+    '404.html', 'apple-touch-icon.png', 'cards', 'favicon.ico', 'favicon.svg',
     'icon-192.png', 'icon-512.png', 'index.html', 'llms-full.txt', 'llms.txt',
     'og.png', 'projects.json', 'robots.txt', 'site.webmanifest', 'sitemap-pages.xml',
     'sitemap.xml', 'styles.css', 'webmcp.js',
   ]);
 });
 
-test('reports the three discovered project sites', async () => {
+test('reports the three discovered project sites: featured first, then by activity', async () => {
   const dir = await outDir();
   const result = await build({ fetchFn: fakeFetch(), now: NOW, outDir: dir });
+  // cloud-cache-action is in src/featured.json; okf-skills has more recent commits.
   assert.deepEqual(result.projects.map((p) => p.name),
-    ['cloud-cache-action', 'AndroidScreencast', 'okf-skills']);
+    ['cloud-cache-action', 'okf-skills', 'AndroidScreencast']);
+  const android = result.projects.find((p) => p.name === 'AndroidScreencast');
+  assert.equal(android.commits90, 0);
+  assert.equal(android.updatedAt, '2026-09-01T00:00:00Z', 'the bot commit must not count as an update');
 });
 
 test('the rendered index names every project', async () => {

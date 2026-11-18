@@ -44,7 +44,7 @@ export function renderSitemapIndex(projects, now) {
     { loc: `${SITE_ORIGIN}/sitemap-pages.xml`, lastmod: isoDate(now) },
     ...projects
       .filter((p) => p.hasSitemap)
-      .map((p) => ({ loc: `${p.url}sitemap.xml`, lastmod: isoDate(p.pushedAt) })),
+      .map((p) => ({ loc: `${p.url}sitemap.xml`, lastmod: isoDate(p.updatedAt) })),
   ];
   const body = entries
     .map(({ loc, lastmod }) =>
@@ -63,7 +63,7 @@ export function renderSitemapPages(projects, now) {
     // Projects with their own sitemap are reached through the index instead.
     ...projects
       .filter((p) => !p.hasSitemap)
-      .map((p) => ({ loc: p.url, lastmod: isoDate(p.pushedAt), priority: '0.8' })),
+      .map((p) => ({ loc: p.url, lastmod: isoDate(p.updatedAt), priority: '0.8' })),
   ];
   const body = entries
     .map(({ loc, lastmod, priority }) =>
@@ -116,7 +116,7 @@ export function renderLlmsFull(owner, projects) {
     `- Language: ${p.language ?? 'n/a'}`,
     `- Topics: ${p.topics.length ? p.topics.join(', ') : 'none'}`,
     `- Stars: ${p.stars}`,
-    `- Last updated: ${isoDate(p.pushedAt)}`,
+    `- Last updated: ${isoDate(p.updatedAt)}`,
     `- Own sitemap: ${p.hasSitemap ? `${p.url}sitemap.xml` : 'none'}`,
     `- Own llms.txt: ${p.hasLlms ? `${p.url}llms.txt` : 'none'}`,
     '',
@@ -156,7 +156,7 @@ export function renderProjectsJson(owner, projects, now) {
       language: p.language,
       topics: p.topics,
       stars: p.stars,
-      updated: isoDate(p.pushedAt),
+      updated: isoDate(p.updatedAt),
       llms: p.hasLlms ? `${p.url}llms.txt` : null,
       sitemap: p.hasSitemap ? `${p.url}sitemap.xml` : null,
     })),

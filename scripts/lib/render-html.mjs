@@ -1,4 +1,4 @@
-import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE } from './discover.mjs';
+import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE, ACTIVITY_DAYS } from './discover.mjs';
 import { isoDate } from './render-seo.mjs';
 import { renderArt, languageColor } from './render-art.mjs';
 
@@ -25,19 +25,11 @@ export function renderCardImage(p) {
   return `<img class="art" src="${htmlEscape(p.card)}" alt="" width="320" height="96" loading="lazy" decoding="async">`;
 }
 
-/**
- * The project to feature: the one with the most stars, the newest on a tie.
- * It moves to the front; the others keep their order (most recently pushed first).
- */
-export function featureFirst(projects) {
-  if (projects.length < 2) return projects;
-  const top = projects.reduce((best, p) => (p.stars > best.stars ? p : best));
-  return [top, ...projects.filter((p) => p !== top)];
-}
-
-export function renderCards(projects, { featured = false } = {}) {
-  return projects.map((p, i) => {
-    const eyebrow = featured && i === 0 ? '<p class="eyebrow">Most starred</p>' : '';
+export function renderCards(projects) {
+  // One featured card alone gets the full row; two or more share rows.
+  const solo = projects.filter((p) => p.featured).length === 1;
+  return projects.map((p) => {
+    const eyebrow = p.featured ? '<p class="eyebrow">Featured</p>' : '';
     // A coloured dot names the language at a glance; the word beside it carries the meaning.
     const lang = p.language
       ? `<li><svg class="dot" viewBox="0 0 8 8" aria-hidden="true" focusable="false"><circle cx="4" cy="4" r="4" fill="${languageColor(p.language)}"/></svg>${htmlEscape(p.language)}</li>`
@@ -46,7 +38,11 @@ export function renderCards(projects, { featured = false } = {}) {
     const stars = p.stars > 0
       ? `<li>${p.stars.toLocaleString('en-US')} ${p.stars === 1 ? 'star' : 'stars'}</li>`
       : '';
-    const meta = `${lang}${stars}<li>Updated <time datetime="${isoDate(p.pushedAt)}">${isoDate(p.pushedAt)}</time></li>`;
+    // Activity is the sort key, so the card shows it.
+    const activity = p.commits90 > 0
+      ? `<li>${p.commits90} ${p.commits90 === 1 ? 'commit' : 'commits'} in ${ACTIVITY_DAYS} days</li>`
+      : '';
+    const meta = `${lang}${stars}${activity}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
 
     const topicItems = p.topics
       .slice(0, TOPIC_CAP)
@@ -65,7 +61,7 @@ export function renderCards(projects, { featured = false } = {}) {
     ].join(' · ');
 
     return `
-      <li class="card">
+      <li class="card${p.featured ? ` featured${solo ? ' solo' : ''}` : ''}">
         ${renderCardImage(p)}
         <div class="body">
           ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
@@ -179,7 +175,7 @@ export function renderJsonLd(owner, projects, now) {
               codeRepository: p.repoUrl,
               programmingLanguage: p.language || undefined,
               keywords: p.topics.length ? p.topics.join(', ') : undefined,
-              dateModified: p.pushedAt,
+              dateModified: p.updatedAt,
               author: { '@id': personId },
             },
           })),
@@ -226,7 +222,7 @@ export function renderIndex({ template, owner, projects, now }) {
     AVATAR: htmlEscape(sizedAvatar(owner.avatar, 256)),
     LINKS: renderLinks(owner),
     STATS: renderStats(projects),
-    CARDS: renderCards(featureFirst(projects), { featured: true }),
+    CARDS: renderCards(projects),
     JSONLD: renderJsonLd(owner, projects, now),
     BUILT: isoDate(now),
     BUILT_ISO: new Date(now).toISOString(),

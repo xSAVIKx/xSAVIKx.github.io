@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import { mkdir, writeFile, copyFile, readFile, rm } from 'node:fs/promises';
+import { mkdir, writeFile, copyFile, readFile, readdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { fetchAllRepos, fetchOwner, selectProjects, enrichAll, SITE_HOST } from './lib/discover.mjs';
+import {
+  fetchAllRepos, fetchOwner, selectProjects, enrichAll, addActivity, orderProjects, SITE_HOST,
+} from './lib/discover.mjs';
 import {
   renderRobots, renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
   renderProjectsJson,
@@ -24,7 +26,18 @@ export async function build({
     fetchAllRepos(fetchFn, token),
   ]);
 
-  const projects = await enrichAll(fetchFn, selectProjects(repos));
+  const { featured } = JSON.parse(await readFile(path.join(SRC, 'featured.json'), 'utf8'));
+  // Hand-made card art kept in this repository: src/cards/<repo>.svg.
+  const hubCards = new Set((await readdir(path.join(SRC, 'cards')).catch(() => []))
+    .filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)));
+
+  const enriched = await addActivity(fetchFn, token,
+    await enrichAll(fetchFn, selectProjects(repos)), now);
+  const projects = orderProjects(enriched.map((p) => ({
+    ...p,
+    // A card the project site publishes wins over one kept here.
+    card: p.card ?? (hubCards.has(p.name) ? `/cards/${p.name}.svg` : null),
+  })), featured);
   // A shape change in the API must be loud, not a silently empty grid.
   if (projects.length === 0) {
     throw new Error('Discovered zero project sites — refusing to publish an empty hub.');
@@ -58,8 +71,11 @@ export async function build({
   const copied = ['styles.css', 'webmcp.js', 'og.png', 'favicon.svg', 'favicon.ico',
     'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
   await Promise.all(copied.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
+  const cards = [...hubCards].map((n) => `cards/${n}.svg`);
+  if (cards.length) await mkdir(path.join(outDir, 'cards'));
+  await Promise.all(cards.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
 
-  return { owner, projects, files: [...Object.keys(generated), ...copied] };
+  return { owner, projects, files: [...Object.keys(generated), ...copied, ...cards] };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -58,6 +58,10 @@ export function toProject(repo) {
     topics: repo.topics ?? [],
     stars: repo.stargazers_count ?? 0,
     pushedAt: repo.pushed_at,
+    // Replaced by the date of the last human commit when activity is known.
+    // pushed_at alone also moves for bot branches, such as Dependabot updates.
+    updatedAt: repo.pushed_at,
+    commits90: null,
   };
 }
 
@@ -166,4 +170,69 @@ export async function enrichAll(fetchFn, projects, options = {}) {
     ]);
     return { ...p, hasSitemap, hasLlms, card };
   }));
+}
+
+export const ACTIVITY_DAYS = 90;
+/** At most this many pages of 100 commits per project. Past that, the count is a floor. */
+export const ACTIVITY_PAGES = 5;
+
+/** A commit made by an automation account, such as Dependabot or github-actions. */
+export function isBotCommit(c) {
+  const login = c?.author?.login ?? '';
+  const name = c?.commit?.author?.name ?? '';
+  return c?.author?.type === 'Bot' || /\[bot\]$/i.test(login) || /\[bot\]$/i.test(name);
+}
+
+async function getCommits(fetchFn, token, name, query) {
+  const url = `${API}/repos/${OWNER}/${encodeURIComponent(name)}/commits?${query}`;
+  const res = await fetchFn(url, { headers: headers(token) });
+  // 409: the repository is empty. It has no commits, which is a real answer.
+  if (res.status === 409) return [];
+  if (!res.ok) throw new Error(`GitHub commits API failed for ${name}: ${res.status}`);
+  return res.json();
+}
+
+/**
+ * How active a project is: human commits on the default branch in the last
+ * ACTIVITY_DAYS days, and the date of the last human commit.
+ */
+export async function fetchActivity(fetchFn, token, project, now) {
+  const since = new Date(new Date(now).getTime() - ACTIVITY_DAYS * 86400000).toISOString();
+  const all = [];
+  for (let page = 1; page <= ACTIVITY_PAGES; page += 1) {
+    const batch = await getCommits(fetchFn, token, project.name, `since=${since}&per_page=100&page=${page}`);
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
+  const recent = all.filter((c) => !isBotCommit(c));
+  let last = recent[0];
+  if (!last) {
+    const older = await getCommits(fetchFn, token, project.name, 'per_page=30');
+    last = older.find((c) => !isBotCommit(c));
+  }
+  const date = last?.commit?.committer?.date ?? last?.commit?.author?.date ?? null;
+  return { commits90: recent.length, updatedAt: date ?? project.pushedAt };
+}
+
+export async function addActivity(fetchFn, token, projects, now) {
+  return Promise.all(projects.map(async (p) => ({ ...p, ...await fetchActivity(fetchFn, token, p, now) })));
+}
+
+/**
+ * The display order. Hand-picked projects come first, in the order given.
+ * The others follow by activity: more recent human commits first, then the
+ * newer last commit. Names match without regard to case. An unknown name is
+ * reported, so a renamed repository does not drop out of the feature in silence.
+ */
+export function orderProjects(projects, featured = [], warn = console.warn) {
+  const byName = new Map(projects.map((p) => [p.name.toLowerCase(), p]));
+  const picked = [];
+  for (const name of featured) {
+    const p = byName.get(String(name).toLowerCase());
+    if (!p) { warn(`featured.json names "${name}", but no project site has that name.`); continue; }
+    if (!picked.includes(p)) picked.push(p);
+  }
+  const rest = projects.filter((p) => !picked.includes(p)).sort((a, b) =>
+    (b.commits90 ?? 0) - (a.commits90 ?? 0) || b.updatedAt.localeCompare(a.updatedAt));
+  return [...picked.map((p) => ({ ...p, featured: true })), ...rest];
 }
