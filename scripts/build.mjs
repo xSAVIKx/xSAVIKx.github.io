@@ -3,11 +3,11 @@ import { mkdir, writeFile, copyFile, readFile, readdir, rm } from 'node:fs/promi
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import {
-  fetchAllRepos, fetchOwner, selectProjects, enrichAll, addActivity, orderProjects, SITE_HOST,
+  fetchAllRepos, fetchOwner, selectProjects, enrichAll, addActivity, addReleases, orderProjects, SITE_HOST,
 } from './lib/discover.mjs';
 import {
   renderRobots, renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
-  renderProjectsJson,
+  renderProjectsJson, renderReleasesAtom,
 } from './lib/render-seo.mjs';
 import { renderIndex, render404, fill, htmlEscape } from './lib/render-html.mjs';
 
@@ -32,8 +32,8 @@ export async function build({
   const hubCards = new Set((await readdir(path.join(SRC, 'cards')).catch(() => []))
     .filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)));
 
-  const enriched = await addActivity(fetchFn, token,
-    await enrichAll(fetchFn, selectProjects(repos)), now);
+  const enriched = await addReleases(fetchFn, token, await addActivity(fetchFn, token,
+    await enrichAll(fetchFn, selectProjects(repos)), now));
   const projects = orderProjects(enriched.map((p) => ({
     ...p,
     // A card the project site publishes wins over one kept here.
@@ -64,6 +64,7 @@ export async function build({
     'llms.txt': renderLlms(owner, projects),
     'llms-full.txt': renderLlmsFull(owner, projects),
     'projects.json': renderProjectsJson(owner, projects, now),
+    'releases.xml': renderReleasesAtom(owner, projects),
   };
 
   await Promise.all(Object.entries(generated)

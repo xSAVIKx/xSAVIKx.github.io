@@ -49,7 +49,11 @@ export function renderCards(projects) {
     const activity = p.commits90 > 0
       ? `<li>${p.commits90} ${p.commits90 === 1 ? 'commit' : 'commits'} in ${ACTIVITY_DAYS} days</li>`
       : '';
-    const meta = `${lang}${stars}${activity}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
+    // The newest release says more about a tool than a commit count. The feed has the history.
+    const release = p.releases?.[0]
+      ? `<li>Release ${htmlEscape(p.releases[0].tag)}</li>`
+      : '';
+    const meta = `${lang}${stars}${activity}${release}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
 
     const topicItems = p.topics
       .slice(0, TOPIC_CAP)

@@ -112,6 +112,22 @@ registers two read-only tools, `list_projects` and `get_project`, with
 Chrome builds used `navigator.modelContext`, so the script accepts either). The
 tools read `projects.json`. A browser without WebMCP ignores the script.
 
+## Releases
+
+The build reads the releases of each project (`fetchReleases` in
+`scripts/lib/discover.mjs`) and keeps the newest 5 published ones. Drafts and
+pre-releases are left out. A 404 gives no releases; another API error fails
+the build, the same as the commits API.
+
+- Each card shows the tag of the newest release.
+- `projects.json` has `latestRelease` for each project.
+- `/releases.xml` is an Atom feed of the 30 newest releases of all projects.
+  Its `<updated>` is the newest release date, not the build time, so a rebuild
+  without a new release writes the same file. A long release note is cut to
+  1000 characters; the entry link leads to the full note.
+- The cap of 5 releases for each project stops one busy repository (for
+  example a monorepo that releases many packages) from filling the feed.
+
 ## Search engine verification
 
 `src/site-verification.json` holds the ownership tokens for Google Search

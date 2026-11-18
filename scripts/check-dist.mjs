@@ -15,6 +15,7 @@ export const BUDGETS = {
   'styles.css': 20_000,
   'webmcp.js': 10_000,
   'projects.json': 50_000,
+  'releases.xml': 200_000,
   card: 8_000,
 };
 
@@ -22,7 +23,7 @@ const PAGES = ['index.html', '404.html'];
 const REQUIRED_FILES = ['index.html', '404.html', 'styles.css', 'robots.txt', 'sitemap.xml',
   'sitemap-pages.xml', 'llms.txt', 'llms-full.txt', 'projects.json', 'webmcp.js', 'og.png',
   'favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png',
-  'site.webmanifest', 'identity/tokens.json'];
+  'site.webmanifest', 'identity/tokens.json', 'releases.xml'];
 
 const attrs = (html, tag, attr) => [...html.matchAll(new RegExp(`<${tag}\\b[^>]*\\b${attr}="([^"]*)"`, 'g'))]
   .map((m) => m[1]);
@@ -99,6 +100,12 @@ export async function checkDist(dir) {
     check(`${xml}: starts with an XML declaration`, text.startsWith('<?xml'));
     check(`${xml}: every URL is same-origin`, locs.length > 0 && locs.every((u) => u.startsWith(SITE_ORIGIN)));
   }
+
+  const feed = await read('releases.xml');
+  check('releases.xml is an Atom feed', feed.startsWith('<?xml') && feed.includes('<feed xmlns="http://www.w3.org/2005/Atom">'));
+  check('releases.xml: every entry has an id, a title, a link and a date',
+    [...feed.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].every(([, e]) =>
+      ['<id>', '<title>', '<link ', '<updated>'].every((t) => e.includes(t))));
 
   for (const [file, max] of Object.entries(BUDGETS)) {
     if (file === 'card') continue;

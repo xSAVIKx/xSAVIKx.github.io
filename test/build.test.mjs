@@ -17,7 +17,7 @@ test('writes the full set of artifacts', async () => {
   assert.deepEqual(written, [
     '404.html', 'apple-touch-icon.png', 'cards', 'favicon.ico', 'favicon.svg',
     'icon-192.png', 'icon-512.png', 'identity', 'index.html', 'llms-full.txt', 'llms.txt',
-    'og.png', 'projects.json', 'robots.txt', 'site.webmanifest', 'sitemap-pages.xml',
+    'og.png', 'projects.json', 'releases.xml', 'robots.txt', 'site.webmanifest', 'sitemap-pages.xml',
     'sitemap.xml', 'styles.css', 'webmcp.js',
   ]);
 });

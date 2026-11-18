@@ -218,6 +218,36 @@ export async function addActivity(fetchFn, token, projects, now) {
   return Promise.all(projects.map(async (p) => ({ ...p, ...await fetchActivity(fetchFn, token, p, now) })));
 }
 
+/** The feed keeps this many releases of each project, so one busy repository cannot fill it. */
+export const RELEASES_PER_PROJECT = 5;
+
+/**
+ * The newest published releases of a project, newest first. Drafts and pre-releases are left out.
+ * A 404 (no access, or the repository is gone) gives no releases, like a repository without any.
+ */
+export async function fetchReleases(fetchFn, token, project) {
+  const url = `${API}/repos/${OWNER}/${encodeURIComponent(project.name)}/releases?per_page=20`;
+  const res = await fetchFn(url, { headers: headers(token) });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`GitHub releases API failed for ${project.name}: ${res.status}`);
+  return (await res.json())
+    .filter((r) => !r.draft && !r.prerelease && r.published_at)
+    .sort((a, b) => b.published_at.localeCompare(a.published_at))
+    .slice(0, RELEASES_PER_PROJECT)
+    .map((r) => ({
+      project: project.name,
+      tag: r.tag_name,
+      name: r.name || r.tag_name,
+      url: r.html_url,
+      publishedAt: r.published_at,
+      body: r.body || '',
+    }));
+}
+
+export async function addReleases(fetchFn, token, projects) {
+  return Promise.all(projects.map(async (p) => ({ ...p, releases: await fetchReleases(fetchFn, token, p) })));
+}
+
 /**
  * The display order. Hand-picked projects come first, in the order given.
  * The others follow by activity: more recent human commits first, then the

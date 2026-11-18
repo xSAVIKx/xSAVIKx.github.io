@@ -22,9 +22,13 @@ H4 identity v1.1, H7 release feed and Atom.
   tests (128 pass). Report and 3 open design questions: `night-run/H4-identity-v1.1.md`.
   Preview: `night-run/H4-preview.html`.
 
+- H7: releases: the newest release tag on each card, `latestRelease` in projects.json, and the
+  Atom feed `/releases.xml` (30 entries, at most 5 for each project). 131 tests pass; the gate has
+  60 checks. Report: `night-run/H7-releases.md`.
+
 ## Next
 
-- H7: release feed on the hub and an Atom feed.
+- Nothing. All five items are done. The operator reviews the branch and fast-forwards main.
 
 ## Blocked
 

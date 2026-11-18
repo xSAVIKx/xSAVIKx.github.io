@@ -102,6 +102,7 @@ export function renderLlms(owner, projects) {
     `- [GitHub profile](${owner.htmlUrl}): Source repositories for every project listed above.`,
     `- [Full inventory](${SITE_ORIGIN}/llms-full.txt): The same list with per-project metadata.`,
     `- [projects.json](${SITE_ORIGIN}/projects.json): The same list as JSON.`,
+    `- [releases.xml](${SITE_ORIGIN}/releases.xml): An Atom feed of the latest releases of all projects.`,
     '',
   ].join('\n');
 }
@@ -159,6 +160,51 @@ export function renderProjectsJson(owner, projects, now) {
       updated: isoDate(p.updatedAt),
       llms: p.hasLlms ? `${p.url}llms.txt` : null,
       sitemap: p.hasSitemap ? `${p.url}sitemap.xml` : null,
+      latestRelease: p.releases?.[0]
+        ? { tag: p.releases[0].tag, url: p.releases[0].url, published: isoDate(p.releases[0].publishedAt) }
+        : null,
     })),
   }, null, 2)}\n`;
+}
+
+/** The feed shows this many entries in all, newest first. */
+export const FEED_ENTRIES = 30;
+// A release note can be long. The entry keeps the start; the link leads to the rest.
+const SUMMARY_CHARS = 1000;
+
+/**
+ * An Atom feed of the latest releases of all projects. Its <updated> is the newest
+ * release date, not the build time, so a rebuild without a new release gives the same file.
+ */
+export function renderReleasesAtom(owner, projects) {
+  const entries = projects.flatMap((p) => p.releases ?? [])
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.project.localeCompare(b.project))
+    .slice(0, FEED_ENTRIES);
+  const updated = entries[0]?.publishedAt ?? '1970-01-01T00:00:00Z';
+  const summaryOf = (body) => (body.length > SUMMARY_CHARS ? `${body.slice(0, SUMMARY_CHARS).trimEnd()} …` : body);
+  const items = entries.map((r) => [
+    '  <entry>',
+    `    <id>${xmlEscape(r.url)}</id>`,
+    `    <title>${xmlEscape(`${r.project} ${r.tag}`)}</title>`,
+    `    <link rel="alternate" type="text/html" href="${xmlEscape(r.url)}"/>`,
+    `    <updated>${xmlEscape(r.publishedAt)}</updated>`,
+    `    <published>${xmlEscape(r.publishedAt)}</published>`,
+    `    <category term="${xmlEscape(r.project)}"/>`,
+    ...(r.body ? [`    <summary type="text">${xmlEscape(summaryOf(r.body))}</summary>`] : []),
+    '  </entry>',
+  ].join('\n'));
+  return [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<feed xmlns="http://www.w3.org/2005/Atom">',
+    `  <id>${SITE_ORIGIN}/releases.xml</id>`,
+    `  <title>${xmlEscape(`${owner.name} — open-source releases`)}</title>`,
+    `  <subtitle>The latest releases of the projects listed on ${xmlEscape(SITE_ORIGIN)}.</subtitle>`,
+    `  <link rel="self" type="application/atom+xml" href="${SITE_ORIGIN}/releases.xml"/>`,
+    `  <link rel="alternate" type="text/html" href="${SITE_ORIGIN}/"/>`,
+    `  <updated>${xmlEscape(updated)}</updated>`,
+    `  <author><name>${xmlEscape(owner.name)}</name><uri>${xmlEscape(PRIMARY_SITE)}</uri></author>`,
+    ...items,
+    '</feed>',
+    '',
+  ].join('\n');
 }
