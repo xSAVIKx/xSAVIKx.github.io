@@ -20,14 +20,21 @@ export function fill(template, values) {
 const TOPIC_CAP = 6;
 
 /** A hand-made image when the site publishes one, the generated art otherwise. */
-export function renderCardImage(p) {
+/**
+ * Featured cards sit on the first screen, and their art is the largest paint there
+ * (measured 2026-11-18 at 390 and 1905 px wide). So their art loads at once, and the
+ * first one asks for high priority. Art further down stays lazy.
+ */
+export function renderCardImage(p, { first = false } = {}) {
   if (!p.card) return renderArt(p);
-  return `<img class="art" src="${htmlEscape(p.card)}" alt="" width="320" height="96" loading="lazy" decoding="async">`;
+  const load = p.featured ? (first ? ' fetchpriority="high"' : '') : ' loading="lazy"';
+  return `<img class="art" src="${htmlEscape(p.card)}" alt="" width="320" height="96"${load} decoding="async">`;
 }
 
 export function renderCards(projects) {
   // One featured card alone gets the full row; two or more share rows.
   const solo = projects.filter((p) => p.featured).length === 1;
+  const firstFeatured = projects.find((p) => p.featured);
   return projects.map((p) => {
     const eyebrow = p.featured ? '<p class="eyebrow">Featured</p>' : '';
     // A coloured dot names the language at a glance; the word beside it carries the meaning.
@@ -62,7 +69,7 @@ export function renderCards(projects) {
 
     return `
       <li class="card${p.featured ? ` featured${solo ? ' solo' : ''}` : ''}">
-        ${renderCardImage(p)}
+        ${renderCardImage(p, { first: p === firstFeatured })}
         <div class="body">
           ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
           <p>${htmlEscape(p.description || 'No description provided.')}</p>

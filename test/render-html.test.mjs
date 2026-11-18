@@ -246,7 +246,7 @@ test('rendering is deterministic for a fixed now', () => {
 });
 
 test('a hand-made card replaces the generated art and stays decorative', () => {
-  const out = renderCardImage({ ...projects[0], card: 'https://xsavikx.github.io/x/card.svg?a=1&b=2' });
+  const out = renderCardImage({ ...projects[0], featured: false, card: 'https://xsavikx.github.io/x/card.svg?a=1&b=2' });
   assert.match(out, /^<img class="art" src="https:\/\/xsavikx\.github\.io\/x\/card\.svg\?a=1&amp;b=2" alt=""/);
   assert.ok(out.includes('loading="lazy"'));
   assert.ok(!out.includes('<svg'));
@@ -276,3 +276,14 @@ test('a malformed token or an unknown engine fails the build', () => {
   assert.throws(() => renderVerification({ yandex: ['abcdefgh12'] }), /unknown engine "yandex"/);
 });
 
+
+test('featured card art is the first-screen paint, so it is not lazy and the first one has high priority', () => {
+  const card = { ...projects[0], featured: true, card: '/cards/a.svg' };
+  const first = renderCardImage(card, { first: true });
+  const second = renderCardImage(card);
+  assert.ok(!first.includes('loading="lazy"') && first.includes('fetchpriority="high"'));
+  assert.ok(!second.includes('loading="lazy"') && !second.includes('fetchpriority'));
+  const out = renderCards([{ ...card, name: 'a' }, { ...card, name: 'b' }, { ...card, name: 'c', featured: false }]);
+  assert.equal((out.match(/fetchpriority="high"/g) || []).length, 1);
+  assert.equal((out.match(/loading="lazy"/g) || []).length, 1);
+});
