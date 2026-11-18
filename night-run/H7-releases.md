@@ -27,5 +27,5 @@
 ## What I did not check
 
 - The feed in a feed reader or the W3C feed validator (no network for the validator here).
-- The look of the long tag `skills/okf-viz/v0.10.0` on a phone card.
+- Checked later: the long tag `skills/okf-viz/v0.10.0` fits in the card at 390 px, and the page does not scroll sideways.
 - JSON-LD `version` on each SoftwareSourceCode item. I did not add it; it is a small follow-up.
