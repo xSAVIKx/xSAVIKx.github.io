@@ -112,6 +112,25 @@ registers two read-only tools, `list_projects` and `get_project`, with
 Chrome builds used `navigator.modelContext`, so the script accepts either). The
 tools read `projects.json`. A browser without WebMCP ignores the script.
 
+## Search engine verification
+
+`src/site-verification.json` holds the ownership tokens for Google Search
+Console (`google`) and Bing Webmaster Tools (`bing`). The build writes one
+`<meta>` tag for each token into the page head. A token is public. It only
+proves that the owner put it on the page. A malformed token or an unknown
+engine fails the build.
+
+To add a token:
+
+1. In the webmaster tool, add the URL-prefix property `https://xsavikx.github.io/`.
+2. Choose the HTML tag method and copy the `content` value only.
+3. Add the value to the right list in `src/site-verification.json`.
+4. Push to main. After the deploy, press "Verify" in the tool.
+5. Submit `https://xsavikx.github.io/sitemap.xml` in the tool.
+
+Do not remove a token while its property is in use. The tool checks the tag
+again from time to time and drops the property when the tag is gone.
+
 ## Constraints worth preserving
 
 **Zero dependencies.** No `dependencies`, no `devDependencies`, no lockfile.

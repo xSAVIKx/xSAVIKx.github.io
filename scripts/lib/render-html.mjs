@@ -198,7 +198,27 @@ function renderStats(projects) {
   return items.join('');
 }
 
-export function renderIndex({ template, owner, projects, now }) {
+// The meta name that each webmaster tool reads.
+const VERIFICATION_META = { google: 'google-site-verification', bing: 'msvalidate.01' };
+// Real tokens use only these characters. A token with other characters is an error, not markup.
+const TOKEN_RE = /^[A-Za-z0-9_-]{8,128}$/;
+
+/** One <meta> tag per token. An unknown engine or a malformed token throws, so a typo fails the build. */
+export function renderVerification(verification = {}) {
+  const tags = [];
+  for (const [engine, tokens] of Object.entries(verification)) {
+    if (engine.startsWith('_')) continue;
+    const name = VERIFICATION_META[engine];
+    if (!name) throw new Error(`site-verification.json: unknown engine "${engine}"`);
+    for (const token of tokens) {
+      if (!TOKEN_RE.test(token)) throw new Error(`site-verification.json: malformed ${engine} token "${token}"`);
+      tags.push(`<meta name="${name}" content="${token}">`);
+    }
+  }
+  return tags.join('\n');
+}
+
+export function renderIndex({ template, owner, projects, now, verification = {} }) {
   const title = `${owner.name} — open-source projects`;
   const langs = languages(projects).slice(0, 4);
   // A description that answers "what is here" by itself, for search snippets and answer engines.
@@ -218,6 +238,7 @@ export function renderIndex({ template, owner, projects, now }) {
       ? `<meta name="twitter:creator" content="@${htmlEscape(owner.twitter)}">\n`
         + `<meta name="twitter:site" content="@${htmlEscape(owner.twitter)}">`
       : '',
+    VERIFICATION: renderVerification(verification),
     BIO: htmlEscape(owner.bio),
     AVATAR: htmlEscape(sizedAvatar(owner.avatar, 256)),
     LINKS: renderLinks(owner),

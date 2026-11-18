@@ -70,6 +70,7 @@ test('the rendered index names every project', async () => {
     assert.ok(html.includes(name), `index is missing ${name}`);
   }
   assert.ok(!html.includes('xSAVIKx.github.io/</a>'), 'hub must not list itself');
+  assert.ok(html.includes('<meta name="google-site-verification"'), 'the build must apply src/site-verification.json');
 });
 
 test('refuses to publish an empty hub', async () => {

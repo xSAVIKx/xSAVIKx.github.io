@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { selectProjects, fetchOwner } from '../scripts/lib/discover.mjs';
-import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404 }
+import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404, renderVerification }
   from '../scripts/lib/render-html.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -31,7 +31,10 @@ test('heading levels descend without skipping', () => {
 });
 
 test('the Google Search Console tag survives rendering verbatim', () => {
-  assert.ok(html.includes(
+  // The token that verified the site must stay, or Search Console loses the property.
+  const verification = JSON.parse(readFileSync(new URL('../src/site-verification.json', import.meta.url)));
+  const out = renderIndex({ template: indexTemplate, owner, projects, now: NOW, verification });
+  assert.ok(out.includes(
     '<meta name="google-site-verification" content="sMLPKoYMB5EoPQiOfUJ51P7xLG55OXBKV9PTEvp2HPw">'));
 });
 
@@ -253,3 +256,23 @@ test('the page links the JSON feed and loads the WebMCP tools', () => {
   assert.ok(html.includes('<link rel="alternate" type="application/json" href="/projects.json"'));
   assert.ok(html.includes('<script type="module" src="/webmcp.js"></script>'));
 });
+
+test('site verification writes one meta tag per token, for Google and Bing', () => {
+  const out = renderIndex({
+    template: indexTemplate, owner, projects, now: NOW,
+    verification: { _comment: 'x', google: ['abcDEF123_-xyz'], bing: ['0123456789ABCDEF0123456789ABCDEF'] },
+  });
+  assert.ok(out.includes('<meta name="google-site-verification" content="abcDEF123_-xyz">'));
+  assert.ok(out.includes('<meta name="msvalidate.01" content="0123456789ABCDEF0123456789ABCDEF">'));
+});
+
+test('without tokens no verification tag is emitted', () => {
+  assert.ok(!html.includes('msvalidate.01'));
+  assert.equal(renderVerification({ google: [], bing: [] }), '');
+});
+
+test('a malformed token or an unknown engine fails the build', () => {
+  assert.throws(() => renderVerification({ google: ['"><script>'] }), /malformed google token/);
+  assert.throws(() => renderVerification({ yandex: ['abcdefgh12'] }), /unknown engine "yandex"/);
+});
+

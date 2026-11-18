@@ -1,0 +1,5 @@
+{
+  "_comment": "Ownership tokens for search engine webmaster tools. The build writes one <meta> tag for each token. A token is public: it only proves that the site owner placed it. See docs/ARCHITECTURE.md (Search engine verification).",
+  "google": ["sMLPKoYMB5EoPQiOfUJ51P7xLG55OXBKV9PTEvp2HPw"],
+  "bing": []
+}

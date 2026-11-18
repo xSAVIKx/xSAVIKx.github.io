@@ -27,6 +27,7 @@ export async function build({
   ]);
 
   const { featured } = JSON.parse(await readFile(path.join(SRC, 'featured.json'), 'utf8'));
+  const verification = JSON.parse(await readFile(path.join(SRC, 'site-verification.json'), 'utf8'));
   // Hand-made card art kept in this repository: src/cards/<repo>.svg.
   const hubCards = new Set((await readdir(path.join(SRC, 'cards')).catch(() => []))
     .filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)));
@@ -53,7 +54,7 @@ export async function build({
   ]);
 
   const generated = {
-    'index.html': renderIndex({ template: indexTemplate, owner, projects, now }),
+    'index.html': renderIndex({ template: indexTemplate, owner, projects, now, verification }),
     '404.html': render404(template404),
     // Templated rather than copied: it names the host, which must follow SITE_ORIGIN.
     'site.webmanifest': fill(manifestTemplate, { HOST: htmlEscape(SITE_HOST) }),
