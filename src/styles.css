@@ -1,32 +1,33 @@
+/* Slate neutrals and the blue accent of serhiichuk.dev: one identity for the person sites. */
 :root {
-  --bg: #faf8f4;
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --text: #1b1a17;
-  --muted: #55524b;
-  --accent: #9a3412;
-  --border: #e2ddd3;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #1d4ed8;
+  --border: #e2e8f0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #141311;
-    --surface: #1d1c19;
-    --text: #ece9e2;
-    --muted: #a8a399;
-    --accent: #f0a868;
-    --border: #34322d;
+    --bg: #14161a;
+    --surface: #1b1e24;
+    --text: #e8e8e8;
+    --muted: #a7adb8;
+    --accent: #6ea8ff;
+    --border: #2a2d33;
   }
 }
 
 * { box-sizing: border-box; }
 
 body {
-  --serif: Charter, "Bitstream Charter", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   margin: 0;
   padding: 0 1.25rem 4rem;
   background: var(--bg);
   color: var(--text);
-  font: 1rem/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 1rem/1.6 var(--sans);
 }
 
 .wrap { max-width: 72rem; margin: 0 auto; }
@@ -45,12 +46,12 @@ a { color: var(--accent); }
 a:focus-visible,
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
-/* Header: the name leads in a serif face; the stats read as three large figures. */
+/* Header: the name leads in a large face; the stats read as three large figures. */
 .hero { padding: 2rem 0 0; display: grid; gap: 0.75rem 2.5rem; align-items: center;
   grid-template-columns: 1fr; grid-template-areas: "avatar" "intro" "stats"; }
 .avatar { grid-area: avatar; border-radius: 50%; display: block; width: 72px; height: 72px; }
 .intro { grid-area: intro; min-width: 0; }
-h1 { font: 700 clamp(2.25rem, 7vw, 3.75rem)/1.05 var(--serif); letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+h1 { font: 700 clamp(2.25rem, 7vw, 3.75rem)/1.05 var(--sans); letter-spacing: -0.02em; margin: 0 0 0.5rem; }
 .bio { color: var(--muted); margin: 0 0 0.875rem; max-width: 40rem; font-size: 1.0625rem; }
 
 .links { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 0; }
@@ -63,14 +64,14 @@ h1 { font: 700 clamp(2.25rem, 7vw, 3.75rem)/1.05 var(--serif); letter-spacing: -
 .stats { grid-area: stats; list-style: none; display: flex; gap: 0 2.5rem;
   padding: 1rem 0 0; margin: 0.5rem 0 0; border-top: 1px solid var(--border);
   font-size: 0.8125rem; color: var(--muted); }
-.stats strong { display: block; color: var(--text); font: 700 2rem/1.1 var(--serif); }
+.stats strong { display: block; color: var(--text); font: 700 2rem/1.1 var(--sans); }
 
 @media (min-width: 48rem) {
   .hero { padding-top: 3.5rem; grid-template-columns: 1fr auto; grid-template-areas: "intro avatar" "stats stats"; }
   .avatar { width: 144px; height: 144px; }
 }
 
-main h2 { font: 700 1.5rem/1.2 var(--serif); margin: 2.5rem 0 1rem; }
+main h2 { font: 700 1.5rem/1.2 var(--sans); margin: 2.5rem 0 1rem; }
 
 .cards { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.25rem;
   grid-template-columns: minmax(0, 1fr); }
@@ -86,7 +87,7 @@ img.art { object-fit: cover; object-position: left center; }
 .body { padding: 0.5rem 1.25rem 0; }
 .eyebrow { margin: 0.5rem 0 -0.25rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--accent); }
-.card h3 { margin: 0; font: 700 1.375rem/1.2 var(--serif); }
+.card h3 { margin: 0; font: 700 1.375rem/1.2 var(--sans); }
 .card h3 a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text);
   text-decoration: none; }
 .card h3 a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-decoration-color: var(--accent); }

@@ -220,8 +220,8 @@ test('the page carries a local icon set, not a third-party avatar', () => {
 
 test('both colour schemes are declared so dark mode does not flash white', () => {
   assert.ok(html.includes('<meta name="color-scheme" content="light dark">'));
-  assert.ok(html.includes('content="#faf8f4" media="(prefers-color-scheme: light)"'));
-  assert.ok(html.includes('content="#141311" media="(prefers-color-scheme: dark)"'));
+  assert.ok(html.includes('content="#f8fafc" media="(prefers-color-scheme: light)"'));
+  assert.ok(html.includes('content="#14161a" media="(prefers-color-scheme: dark)"'));
 });
 
 test('the social card is fully described for scrapers that need dimensions', () => {
