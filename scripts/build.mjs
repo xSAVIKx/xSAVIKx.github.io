@@ -71,11 +71,17 @@ export async function build({
   const copied = ['styles.css', 'webmcp.js', 'og.png', 'favicon.svg', 'favicon.ico',
     'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
   await Promise.all(copied.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
+  // The shared identity: served at /identity/ so project sites can compare their vendored copy.
+  const identity = ['tokens.json', ...(await readdir(path.join(ROOT, 'identity', 'dist')))]
+    .map((f) => [f === 'tokens.json' ? path.join(ROOT, 'identity', f) : path.join(ROOT, 'identity', 'dist', f), `identity/${f}`]);
+  await mkdir(path.join(outDir, 'identity'));
+  await Promise.all(identity.map(([from, to]) => copyFile(from, path.join(outDir, to))));
+
   const cards = [...hubCards].map((n) => `cards/${n}.svg`);
   if (cards.length) await mkdir(path.join(outDir, 'cards'));
   await Promise.all(cards.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
 
-  return { owner, projects, files: [...Object.keys(generated), ...copied, ...cards] };
+  return { owner, projects, files: [...Object.keys(generated), ...copied, ...cards, ...identity.map(([, to]) => to)] };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

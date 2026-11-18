@@ -12,6 +12,7 @@ handful of files into `dist/`, and a workflow publishes that to GitHub Pages.
 | `scripts/lib/render-seo.mjs` | `robots.txt`, sitemap index and urlset, `llms.txt`, `llms-full.txt` |
 | `scripts/lib/render-html.mjs` | `index.html`, `404.html`, JSON-LD, HTML escaping |
 | `scripts/lib/render-art.mjs` | Generated SVG card art, seeded by repo name and tinted by language |
+| `identity/` | Shared design tokens for all the operator's sites; see `identity/README.md` |
 | `scripts/build.mjs` | Orchestrates discover → enrich → render → write `dist/` |
 | `scripts/verify.mjs` | Post-build checks, including live URL fetches |
 | `src/` | Templates, stylesheet, icons — copied or filled, never generated |

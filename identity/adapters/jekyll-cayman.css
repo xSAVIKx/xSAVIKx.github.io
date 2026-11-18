@@ -1,0 +1,8 @@
+/* Adapter: Jekyll cayman. Put in assets/css/style.scss after: @import "{{ site.theme }}";
+ * Only the page body. The gradient header, its buttons and the link colour stay the project's own. */
+body { background: var(--ys-bg); color: var(--ys-text); font-family: var(--ys-font-sans); }
+.main-content { color: var(--ys-text); }
+.main-content code, .main-content pre { font-family: var(--ys-font-mono); background: var(--ys-surface-2); color: var(--ys-text); border-color: var(--ys-border); }
+.main-content blockquote { color: var(--ys-muted); border-left-color: var(--ys-border-strong); }
+.main-content table th, .main-content table td { border-color: var(--ys-border); }
+.site-footer { border-top-color: var(--ys-border); color: var(--ys-muted); }

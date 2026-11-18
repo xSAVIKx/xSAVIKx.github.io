@@ -1,0 +1,20 @@
+/* Adapter: VitePress 1 default theme. Import after the theme's own style.css.
+ * Only neutrals and fonts. The --vp-c-brand-* colours, buttons, hero and logo stay the project's own. */
+:root, .dark {
+  --vp-c-bg: var(--ys-bg);
+  --vp-c-bg-alt: var(--ys-surface-2);
+  --vp-c-bg-elv: var(--ys-surface);
+  --vp-c-bg-soft: var(--ys-surface);
+  --vp-c-text-1: var(--ys-text);
+  --vp-c-text-2: var(--ys-muted);
+  --vp-c-text-3: var(--ys-muted);
+  --vp-c-divider: var(--ys-border);
+  --vp-c-gutter: var(--ys-border);
+  --vp-c-border: var(--ys-border-strong);
+  --vp-nav-bg-color: var(--ys-bg);
+  --vp-sidebar-bg-color: var(--ys-bg);
+  --vp-code-block-bg: var(--ys-surface-2);
+  --vp-font-family-base: var(--ys-font-sans);
+  --vp-font-family-mono: var(--ys-font-mono);
+}
+.VPFeature { border: 1px solid var(--ys-border); border-radius: var(--ys-radius-lg); }

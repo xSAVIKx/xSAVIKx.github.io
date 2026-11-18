@@ -1,0 +1,15 @@
+/* Adapter: MkDocs Material 9. Load with extra_css and set theme.font: false.
+ * Only neutrals and fonts. The header (primary) and accent colours stay the project's own. */
+:root, [data-md-color-scheme] {
+  --md-default-bg-color: var(--ys-bg);
+  --md-default-fg-color: var(--ys-text);
+  --md-default-fg-color--light: var(--ys-muted);
+  --md-default-fg-color--lighter: var(--ys-border-strong);
+  --md-default-fg-color--lightest: var(--ys-border);
+  --md-typeset-color: var(--ys-text);
+  --md-code-bg-color: var(--ys-surface-2);
+  --md-code-fg-color: var(--ys-text);
+  --md-text-font-family: var(--ys-font-sans);
+  --md-code-font-family: var(--ys-font-mono);
+}
+body, input { font-family: var(--ys-font-sans); }

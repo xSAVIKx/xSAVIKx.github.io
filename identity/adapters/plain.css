@@ -1,0 +1,3 @@
+/* Adapter: a hand-written site. The page keeps its own accent, header and art. */
+body { background: var(--ys-bg); color: var(--ys-text); font-family: var(--ys-font-sans); }
+code, pre, kbd, samp { font-family: var(--ys-font-mono); }
