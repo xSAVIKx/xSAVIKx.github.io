@@ -71,6 +71,12 @@ shrink them. `render-art.mjs` draws the art instead: a shape pattern seeded by
 the repository name, tinted by the GitHub language colour, with a two-letter
 badge. The same name always gives the same art, and a new project gets art with
 no work. The art is `aria-hidden`; the card title names the project.
+
+A project can replace the generated art with a hand-made image. The build
+probes the site root for `card.svg`, then `card.webp`, then `card.png`, and
+uses the first file that exists. The image shows at a 10:3 ratio and is cropped
+to fit; 640x192 suits a raster file. Keep the left 30% calm if text or a mark
+must stay visible on narrow cards.
 `test/render-art.test.mjs` checks the badge letters for 4.5:1 contrast on every
 language colour.
 
@@ -81,6 +87,15 @@ The JSON-LD graph has a `Person`, a `WebSite`, and the page itself as both
 each item is a `SoftwareSourceCode` with its repository, language, topics and
 author. `knowsAbout` on the person comes from the project languages and topics.
 Profile links carry `rel="me"`.
+
+## Machine-readable access
+
+Agents get the project list three ways: `llms.txt` and `llms-full.txt` as text,
+`projects.json` as data, and WebMCP tools on the page. `src/webmcp.js`
+registers two read-only tools, `list_projects` and `get_project`, with
+`document.modelContext.registerTool()` (the API in the WebMCP draft; early
+Chrome builds used `navigator.modelContext`, so the script accepts either). The
+tools read `projects.json`. A browser without WebMCP ignores the script.
 
 ## Constraints worth preserving
 

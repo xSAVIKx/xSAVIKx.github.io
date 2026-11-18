@@ -101,6 +101,7 @@ export function renderLlms(owner, projects) {
     `- [${new URL(PRIMARY_SITE).host}](${PRIMARY_SITE}): Primary site — articles and writing.`,
     `- [GitHub profile](${owner.htmlUrl}): Source repositories for every project listed above.`,
     `- [Full inventory](${SITE_ORIGIN}/llms-full.txt): The same list with per-project metadata.`,
+    `- [projects.json](${SITE_ORIGIN}/projects.json): The same list as JSON.`,
     '',
   ].join('\n');
 }
@@ -137,4 +138,27 @@ export function renderLlmsFull(owner, projects) {
     ...(owner.twitter ? [`- X: https://x.com/${owner.twitter}`] : []),
     '',
   ].join('\n');
+}
+
+/**
+ * The project list as JSON, for agents and for the WebMCP tools on the page.
+ * Same facts as llms-full.txt, in a form a program reads without parsing prose.
+ */
+export function renderProjectsJson(owner, projects, now) {
+  return `${JSON.stringify({
+    owner: { name: owner.name, login: owner.login, url: PRIMARY_SITE, github: owner.htmlUrl },
+    generated: new Date(now).toISOString(),
+    projects: projects.map((p) => ({
+      name: p.name,
+      description: p.description || null,
+      url: p.url,
+      repository: p.repoUrl,
+      language: p.language,
+      topics: p.topics,
+      stars: p.stars,
+      updated: isoDate(p.pushedAt),
+      llms: p.hasLlms ? `${p.url}llms.txt` : null,
+      sitemap: p.hasSitemap ? `${p.url}sitemap.xml` : null,
+    })),
+  }, null, 2)}\n`;
 }

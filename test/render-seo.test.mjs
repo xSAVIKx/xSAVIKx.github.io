@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { selectProjects, fetchOwner, SITE_ORIGIN } from '../scripts/lib/discover.mjs';
 import {
   AI_CRAWLERS, xmlEscape, isoDate, renderRobots,
-  renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
+  renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull, renderProjectsJson,
 } from '../scripts/lib/render-seo.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -106,4 +106,14 @@ test('llms-full.txt adds the per-project metadata the short form omits', () => {
   assert.ok(out.includes('TypeScript'));
   assert.ok(out.includes('github-actions'));
   assert.ok(out.includes('Last updated: 2026-09-11'));
+});
+
+test('projects.json lists every project with absolute URLs and nested assets', () => {
+  const data = JSON.parse(renderProjectsJson(owner, projects, NOW));
+  assert.equal(data.generated, NOW.toISOString());
+  assert.equal(data.projects.length, projects.length);
+  const cca = data.projects.find((p) => p.name === 'cloud-cache-action');
+  assert.equal(cca.url, `${SITE_ORIGIN}/cloud-cache-action/`);
+  assert.equal(cca.llms, `${SITE_ORIGIN}/cloud-cache-action/llms.txt`);
+  assert.equal(data.projects.find((p) => p.name === 'okf-skills').llms, null);
 });

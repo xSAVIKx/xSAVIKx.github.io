@@ -19,6 +19,12 @@ export function fill(template, values) {
 // a "+N more" count instead of rendered individually.
 const TOPIC_CAP = 6;
 
+/** A hand-made image when the site publishes one, the generated art otherwise. */
+export function renderCardImage(p) {
+  if (!p.card) return renderArt(p);
+  return `<img class="art" src="${htmlEscape(p.card)}" alt="" width="320" height="96" loading="lazy" decoding="async">`;
+}
+
 export function renderCards(projects) {
   return projects.map((p) => {
     const meta = [
@@ -45,7 +51,7 @@ export function renderCards(projects) {
 
     return `
       <li class="card">
-        ${renderArt(p)}
+        ${renderCardImage(p)}
         <h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
         <p>${htmlEscape(p.description || 'No description provided.')}</p>
         ${topics}

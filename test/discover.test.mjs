@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   SITE_ORIGIN, isProjectSite, toProject, selectProjects,
-  probeAsset, enrichAll, fetchAllRepos, fetchOwner,
+  probeAsset, enrichAll, fetchAllRepos, fetchOwner, findCard,
 } from '../scripts/lib/discover.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -143,4 +143,21 @@ test('fetchOwner maps the API shape to our Owner shape', async () => {
   assert.equal(owner.name, 'Yurii Serhiichuk');
   assert.equal(owner.twitter, 'xSAVIKx');
   assert.match(owner.avatar, /avatars\.githubusercontent\.com/);
+});
+
+test('a hand-made card is found in order of preference: svg, webp, png', async () => {
+  const project = { url: 'https://example.test/p/' };
+  const only = (file) => async (url) => (url.endsWith(file) ? { ok: true, status: 200 } : { ok: false, status: 404 });
+  assert.equal(await findCard(only('card.png'), project), 'https://example.test/p/card.png');
+  assert.equal(await findCard(only('card.svg'), project), 'https://example.test/p/card.svg');
+  assert.equal(await findCard(async () => ({ ok: false, status: 404 }), project), null);
+});
+
+test('enrichAll records a hand-made card, or null when there is none', async () => {
+  const fake = async (url) => (url === 'https://xsavikx.github.io/okf-skills/card.webp'
+    ? { ok: true, status: 200 } : { ok: false, status: 404 });
+  const enriched = await enrichAll(fake, selectProjects(repos));
+  assert.equal(enriched.find((p) => p.name === 'okf-skills').card,
+    'https://xsavikx.github.io/okf-skills/card.webp');
+  assert.equal(enriched.find((p) => p.name === 'cloud-cache-action').card, null);
 });

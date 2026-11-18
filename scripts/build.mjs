@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fetchAllRepos, fetchOwner, selectProjects, enrichAll, SITE_HOST } from './lib/discover.mjs';
 import {
   renderRobots, renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
+  renderProjectsJson,
 } from './lib/render-seo.mjs';
 import { renderIndex, render404, fill, htmlEscape } from './lib/render-html.mjs';
 
@@ -48,12 +49,13 @@ export async function build({
     'sitemap-pages.xml': renderSitemapPages(projects, now),
     'llms.txt': renderLlms(owner, projects),
     'llms-full.txt': renderLlmsFull(owner, projects),
+    'projects.json': renderProjectsJson(owner, projects, now),
   };
 
   await Promise.all(Object.entries(generated)
     .map(([name, body]) => writeFile(path.join(outDir, name), body)));
 
-  const copied = ['styles.css', 'og.png', 'favicon.svg', 'favicon.ico',
+  const copied = ['styles.css', 'webmcp.js', 'og.png', 'favicon.svg', 'favicon.ico',
     'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
   await Promise.all(copied.map((f) => copyFile(path.join(SRC, f), path.join(outDir, f))));
 

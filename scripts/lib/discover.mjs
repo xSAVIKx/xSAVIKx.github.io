@@ -141,12 +141,29 @@ export async function probeAsset(fetchFn, url, { retries = 2, delay = sleep } = 
   );
 }
 
+/**
+ * File names a project site can publish at its root to replace the generated
+ * card art, in order of preference. The image shows at a 10:3 ratio; 640x192
+ * suits a raster file.
+ */
+export const CARD_FILES = ['card.svg', 'card.webp', 'card.png'];
+
+/** The URL of the first hand-made card image the site publishes, or null. */
+export async function findCard(fetchFn, project, options = {}) {
+  for (const file of CARD_FILES) {
+    const url = `${project.url}${file}`;
+    if (await probeAsset(fetchFn, url, options)) return url;
+  }
+  return null;
+}
+
 export async function enrichAll(fetchFn, projects, options = {}) {
   return Promise.all(projects.map(async (p) => {
-    const [hasSitemap, hasLlms] = await Promise.all([
+    const [hasSitemap, hasLlms, card] = await Promise.all([
       probeAsset(fetchFn, `${p.url}sitemap.xml`, options),
       probeAsset(fetchFn, `${p.url}llms.txt`, options),
+      findCard(fetchFn, p, options),
     ]);
-    return { ...p, hasSitemap, hasLlms };
+    return { ...p, hasSitemap, hasLlms, card };
   }));
 }

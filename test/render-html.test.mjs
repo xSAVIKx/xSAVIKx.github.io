@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { selectProjects, fetchOwner } from '../scripts/lib/discover.mjs';
-import { htmlEscape, fill, renderCards, renderJsonLd, renderIndex, render404 }
+import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404 }
   from '../scripts/lib/render-html.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -240,4 +240,16 @@ test('the 404 page carries the same icon identity', () => {
 
 test('rendering is deterministic for a fixed now', () => {
   assert.equal(html, renderIndex({ template: indexTemplate, owner, projects, now: NOW }));
+});
+
+test('a hand-made card replaces the generated art and stays decorative', () => {
+  const out = renderCardImage({ ...projects[0], card: 'https://xsavikx.github.io/x/card.svg?a=1&b=2' });
+  assert.match(out, /^<img class="art" src="https:\/\/xsavikx\.github\.io\/x\/card\.svg\?a=1&amp;b=2" alt=""/);
+  assert.ok(out.includes('loading="lazy"'));
+  assert.ok(!out.includes('<svg'));
+});
+
+test('the page links the JSON feed and loads the WebMCP tools', () => {
+  assert.ok(html.includes('<link rel="alternate" type="application/json" href="/projects.json"'));
+  assert.ok(html.includes('<script type="module" src="/webmcp.js"></script>'));
 });
