@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 192" width="640" height="192">
+<style>.s{fill:none;stroke:#2f6b12;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#2f6b12}.d{stroke-dasharray:2 10}.q{opacity:.45}text{font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#2f6b12}@media(prefers-color-scheme:dark){.s{stroke:#a6ee6e}.f,text{fill:#a6ee6e}}</style>
+<rect width="640" height="192" fill="#89e051" opacity=".14"/>
+<rect width="192" height="192" fill="#89e051" opacity=".16"/>
+
+<rect class="s" x="40" y="46" width="112" height="100" rx="10"/><path class="s t" d="M40 68h112"/>
+<path class="s" d="M62 90l18 14-18 14M92 120h30"/>
+<path class="s" d="M224 60h40v-20h36v20h60v-20h20v20h80v-20h48v20h100"/>
+<path class="s q" d="M224 108h70v-20h24v20h36v-20h70v20h30v-20h54v20h100"/>
+<path class="s" d="M224 156h24v-20h60v20h90v-20h30v20h44v-20h70v20h66"/>
+<circle class="f" cx="264" cy="60" r="5"/><circle class="f" cx="424" cy="108" r="5"/><circle class="f" cx="542" cy="136" r="5"/>
+</svg>

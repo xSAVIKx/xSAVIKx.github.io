@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 192" width="640" height="192">
+<style>.s{fill:none;stroke:#0b6b3a;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#0b6b3a}.d{stroke-dasharray:2 10}.q{opacity:.45}text{font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#0b6b3a}@media(prefers-color-scheme:dark){.s{stroke:#7be8ac}.f,text{fill:#7be8ac}}</style>
+<rect width="640" height="192" fill="#3ddc84" opacity=".14"/>
+<rect width="192" height="192" fill="#3ddc84" opacity=".16"/>
+
+<rect class="s" x="68" y="38" width="56" height="116" rx="10"/><path class="s" d="M88 50h16"/><circle class="f" cx="96" cy="140" r="4"/>
+<path class="s t" d="M82 92l10 10 18-20"/>
+<path class="s d" d="M214 96h150"/><path class="s" d="M352 84l14 12-14 12"/>
+<path class="s q" d="M236 70a40 40 0 0 1 0 52M256 56a66 66 0 0 1 0 80"/>
+<rect class="s" x="400" y="34" width="190" height="108" rx="8"/><path class="s" d="M470 164h50M495 142v22"/>
+<rect class="s t" x="472" y="48" width="44" height="80" rx="6"/><path class="s t" d="M484 88l7 7 13-14"/>
+<path class="s t q" d="M416 52h36M416 66h24M536 52h38M536 66h26M536 80h38"/>
+</svg>
