@@ -111,7 +111,7 @@ test('the fact line has the language, the stars and the update date, and no comm
   const out = renderCards([{ ...projects[0], language: 'Go', stars: 12, commits90: 7, updatedAt: '2026-09-01T10:00:00Z' }]);
   const meta = out.match(/<ul class="meta" role="list">([\s\S]*?)<\/ul>/)[1];
   const items = [...meta.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
-  assert.deepEqual(items, ['Go', '12 stars', 'Updated 2026-09-01']);
+  assert.deepEqual(items, ['Go', '12 stars', 'Updated 1 Sep 2026']);
   assert.ok(!out.includes('commit'));
 });
 

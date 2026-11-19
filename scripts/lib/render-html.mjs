@@ -76,7 +76,7 @@ export function renderCards(projects) {
       ? `<li>${p.stars.toLocaleString('en-US')} ${p.stars === 1 ? 'star' : 'stars'}</li>`
       : '';
     // One fact line: language, stars, update date. The commit count is the sort key only.
-    const meta = `${lang}${stars}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
+    const meta = `${lang}${stars}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${shortDate(p.updatedAt)}</time></li>`;
 
     const topics = p.topics.length
       ? `<ul class="topics" role="list">${p.topics.slice(0, TOPIC_CAP).map((t) => `<li>${htmlEscape(t)}</li>`).join('')}</ul>`
