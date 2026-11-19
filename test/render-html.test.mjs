@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { selectProjects, fetchOwner } from '../scripts/lib/discover.mjs';
-import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404, renderVerification }
+import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404, renderVerification,
+  renderStats, lastRowFill, shortDate }
   from '../scripts/lib/render-html.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -84,16 +85,68 @@ test('lists keep their list role even though the stylesheet hides the bullets', 
 });
 
 test('cards are list items inside the cards list', () => {
-  assert.equal((html.match(/<li class="card">/g) ?? []).length, projects.length);
+  assert.equal((html.match(/<li class="card[ "]/g) ?? []).length, projects.length);
 });
 
 test('a project without a description gets a fallback line, not an empty paragraph', () => {
   assert.ok(html.includes('No description provided.'));
 });
 
-test('the nested llms.txt link appears only where one exists', () => {
-  assert.ok(html.includes('https://xsavikx.github.io/cloud-cache-action/llms.txt'));
-  assert.ok(!html.includes('https://xsavikx.github.io/okf-skills/llms.txt'));
+test('a card has no llms.txt link; the page head and the footer keep the hub llms.txt', () => {
+  assert.ok(!renderCards(projects).includes('llms.txt'));
+  assert.ok(html.includes('<link rel="alternate" type="text/plain" href="/llms.txt"'));
+  assert.ok(html.includes('<a href="/llms.txt">llms.txt</a>'));
+});
+
+test('the name link is the only link to the project site, and an arrow hidden from a screen reader follows it', () => {
+  for (const p of projects) {
+    const out = renderCards([p]);
+    assert.equal(out.split(`href="${p.url}"`).length - 1, 1, p.name);
+    assert.ok(out.includes(`${p.name}</a><span class="arrow" aria-hidden="true">→</span></h3>`), p.name);
+    assert.ok(out.includes(`<a href="${p.repoUrl}" aria-label="Source for ${p.name}">Source</a>`), p.name);
+  }
+});
+
+test('the fact line has the language, the stars and the update date, and no commit count', () => {
+  const out = renderCards([{ ...projects[0], language: 'Go', stars: 12, commits90: 7, updatedAt: '2026-09-01T10:00:00Z' }]);
+  const meta = out.match(/<ul class="meta" role="list">([\s\S]*?)<\/ul>/)[1];
+  const items = [...meta.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
+  assert.deepEqual(items, ['Go', '12 stars', 'Updated 2026-09-01']);
+  assert.ok(!out.includes('commit'));
+});
+
+test('the newest release is a link to its GitHub page, with its date, in the link row', () => {
+  const p = { ...projects[0], name: 'tool', releases: [
+    { tag: 'v1.2.3', url: 'https://github.com/xSAVIKx/tool/releases/tag/v1.2.3', publishedAt: '2026-11-12T08:00:00Z' },
+    { tag: 'v1.2.2', url: 'https://github.com/xSAVIKx/tool/releases/tag/v1.2.2', publishedAt: '2026-10-01T08:00:00Z' }] };
+  const out = renderCards([p]);
+  const also = out.match(/<p class="also">([\s\S]*?)<\/p>/)[1];
+  assert.ok(also.includes('<a href="https://github.com/xSAVIKx/tool/releases/tag/v1.2.3" aria-label="v1.2.3 · 12 Nov 2026, release of tool">v1.2.3 · <time datetime="2026-11-12">12 Nov 2026</time></a>'));
+  assert.ok(!out.includes('v1.2.2'));
+  assert.ok(!renderCards([{ ...p, releases: [] }]).includes('release of'));
+  assert.equal(shortDate('2026-01-05T23:59:59Z'), '5 Jan 2026');
+});
+
+test('a release tag is HTML-escaped in the text and in the label', () => {
+  const out = renderCards([{ ...projects[0], releases: [{ tag: '<b>"1"', url: 'https://e/?a=1&b=2', publishedAt: '2026-11-12T08:00:00Z' }] }]);
+  assert.ok(!out.includes('<b>'));
+  assert.ok(out.includes('href="https://e/?a=1&amp;b=2"'));
+  assert.ok(out.includes('&lt;b&gt;&quot;1&quot; · <time'));
+});
+
+test('the cards of an incomplete last desktop row get a class that makes them wider', () => {
+  const card = (name, featured = false) => ({ ...projects[0], name, featured });
+  const classesOf = (list) => [...renderCards(list).matchAll(/<li class="(card[^"]*)"/g)].map((m) => m[1]);
+  // 2 featured + 5 others: rows of 2, 3 and 2. The two last cards share the last row.
+  const seven = [card('a', true), card('b', true), card('c'), card('d'), card('e'), card('f'), card('g')];
+  assert.deepEqual(classesOf(seven), ['card featured', 'card featured', 'card', 'card', 'card', 'card fill-2', 'card fill-2']);
+  // One card remains: it takes the row.
+  assert.deepEqual(classesOf(seven.slice(0, 6)).slice(-2), ['card', 'card fill-1']);
+  // A complete last row, and a last row with a featured card, do not change.
+  assert.equal(lastRowFill(seven.slice(0, 5)).size, 0);
+  assert.equal(lastRowFill([card('a', true), card('b', true), card('c', true)]).size, 0);
+  // A lone featured card takes a row; the cards after it start a new row.
+  assert.deepEqual(classesOf([card('a', true), card('b')]), ['card featured solo', 'card fill-1']);
 });
 
 test('a project with topics renders each one, escaped, in its own list', () => {
@@ -112,11 +165,11 @@ test('a project with no topics renders no topics list at all', () => {
   assert.ok(!out.includes('class="topics"'));
 });
 
-test('topics beyond the cap collapse into a "+N more" count instead of piling up', () => {
-  const manyTopics = { ...projects[0], topics: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] };
+test('a card shows 4 topics at most', () => {
+  const manyTopics = { ...projects[0], topics: ['a', 'b', 'c', 'd', 'e', 'f'] };
   const out = renderCards([manyTopics]);
-  assert.ok(out.includes('<li>+2 more</li>'));
-  assert.ok(!out.includes('<li>g</li>'));
+  const shown = [...out.match(/<ul class="topics" role="list">([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1]);
+  assert.deepEqual(shown, ['a', 'b', 'c', 'd']);
 });
 
 test('topic text is HTML-escaped like every other interpolated value', () => {
@@ -195,10 +248,20 @@ test('every card carries decorative art hidden from assistive technology', () =>
   assert.equal((html.match(/<svg class="art"[^>]*aria-hidden="true"/g) ?? []).length, projects.length);
 });
 
-test('the stats line counts projects and stars', () => {
+test('the figures are one line of text beside the section heading', () => {
   const stars = projects.reduce((n, p) => n + p.stars, 0);
-  assert.ok(html.includes(`<strong>${projects.length}</strong> project sites`));
-  assert.ok(html.includes(`<strong>${stars}</strong> stars`));
+  assert.ok(html.includes(`<h2>Project sites</h2>\n    <p class="stats">${projects.length} project sites · ${stars} stars</p>`));
+  assert.ok(!html.includes('<strong>'));
+  const list = [{ stars: 700, releases: [{}] }, { stars: 43, releases: [] }, { stars: 0 }];
+  assert.equal(renderStats(list), '3 project sites · 743 stars · 1 with releases');
+  assert.equal(renderStats([{ stars: 1 }]), '1 project site · 1 star');
+});
+
+test('the footer links are a list, so each link has its own 44 px target', () => {
+  const footer = html.match(/<footer>([\s\S]*?)<\/footer>/)[1];
+  const list = footer.match(/<ul class="links" role="list">([\s\S]*?)<\/ul>/)[1];
+  assert.equal((list.match(/<li><a /g) ?? []).length, 4);
+  assert.ok(!footer.replace(list, '').includes('<a '));
 });
 
 test('JSON-LD escapes any closing script tag in the data', () => {

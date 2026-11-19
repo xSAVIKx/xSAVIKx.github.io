@@ -59,20 +59,25 @@
       <ul class="links" role="list">{{LINKS}}</ul>
     </nav>
   </div>
-  <ul class="stats" role="list" aria-label="At a glance">{{STATS}}</ul>
 </header>
 <main id="main" tabindex="-1">
-  <h2>Project sites</h2>
+  <div class="section-head">
+    <h2>Project sites</h2>
+    <p class="stats">{{STATS}}</p>
+  </div>
   <ul class="cards" role="list">{{CARDS}}</ul>
 </main>
 <footer>
   <p>These are the GitHub Pages sites published under <code>{{HOST}}</code>.
-     This index is generated from the GitHub API —
-     <a href="https://github.com/xSAVIKx/xSAVIKx.github.io">source</a>.
-     For agents: <a href="/llms.txt">llms.txt</a>,
-     <a href="/projects.json">projects.json</a>, and WebMCP tools on this page.
-     Releases: <a href="/releases.xml">Atom feed</a>.
+     This index is generated from the GitHub API.
+     For agents: llms.txt, projects.json, and WebMCP tools on this page.
      Last built <time datetime="{{BUILT_ISO}}">{{BUILT}}</time>.</p>
+  <ul class="links" role="list">
+    <li><a href="https://github.com/xSAVIKx/xSAVIKx.github.io">Source of this index</a></li>
+    <li><a href="/llms.txt">llms.txt</a></li>
+    <li><a href="/projects.json">projects.json</a></li>
+    <li><a href="/releases.xml">Atom feed</a></li>
+  </ul>
 </footer>
 </div>
 </body>

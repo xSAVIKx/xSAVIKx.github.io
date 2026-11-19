@@ -1,4 +1,4 @@
-import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE, ACTIVITY_DAYS } from './discover.mjs';
+import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE } from './discover.mjs';
 import { isoDate } from './render-seo.mjs';
 import { renderArt, languageColor } from './render-art.mjs';
 
@@ -14,10 +14,39 @@ export function fill(template, values) {
     Object.hasOwn(values, key) ? values[key] : match);
 }
 
-// Repos can carry dozens of topics; past this many the card would read as a
-// wall of tags rather than a scannable summary, so the rest are folded into
-// a "+N more" count instead of rendered individually.
-const TOPIC_CAP = 6;
+// A card is a summary, so it shows at most this many topics. The other topics
+// stay in projects.json, llms-full.txt and the JSON-LD keywords.
+const TOPIC_CAP = 4;
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** A date as "12 Nov 2026", in UTC, so the same input gives the same text on each machine. */
+export function shortDate(value) {
+  const d = new Date(value);
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+/**
+ * The desktop grid has 6 tracks: a featured card takes 3, another card takes 2, and a lone
+ * featured card takes the row. This function finds the cards of an incomplete last row and
+ * gives each a class that makes it wider, so the row has no empty slot.
+ * Result: a Map from project to "fill-2" (two cards share the row) or "fill-1" (one card).
+ */
+export function lastRowFill(projects) {
+  const solo = projects.filter((p) => p.featured).length === 1;
+  let row = [];
+  let used = 0;
+  for (const p of projects) {
+    const span = p.featured ? (solo ? 6 : 3) : 2;
+    if (used + span > 6) { row = []; used = 0; }
+    row.push(p);
+    used += span;
+  }
+  const fill = new Map();
+  if (used === 6 || row.some((p) => p.featured)) return fill;
+  for (const p of row) fill.set(p, row.length === 2 ? 'fill-2' : 'fill-1');
+  return fill;
+}
 
 /** A hand-made image when the site publishes one, the generated art otherwise. */
 /**
@@ -35,6 +64,7 @@ export function renderCards(projects) {
   // One featured card alone gets the full row; two or more share rows.
   const solo = projects.filter((p) => p.featured).length === 1;
   const firstFeatured = projects.find((p) => p.featured);
+  const fill = lastRowFill(projects);
   return projects.map((p) => {
     const eyebrow = p.featured ? '<p class="eyebrow">Featured</p>' : '';
     // A coloured dot names the language at a glance; the word beside it carries the meaning.
@@ -45,37 +75,31 @@ export function renderCards(projects) {
     const stars = p.stars > 0
       ? `<li>${p.stars.toLocaleString('en-US')} ${p.stars === 1 ? 'star' : 'stars'}</li>`
       : '';
-    // Activity is the sort key, so the card shows it.
-    const activity = p.commits90 > 0
-      ? `<li>${p.commits90} ${p.commits90 === 1 ? 'commit' : 'commits'} in ${ACTIVITY_DAYS} days</li>`
-      : '';
-    // The newest release says more about a tool than a commit count. The feed has the history.
-    const release = p.releases?.[0]
-      ? `<li>Release ${htmlEscape(p.releases[0].tag)}</li>`
-      : '';
-    const meta = `${lang}${stars}${activity}${release}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
+    // One fact line: language, stars, update date. The commit count is the sort key only.
+    const meta = `${lang}${stars}<li>Updated <time datetime="${isoDate(p.updatedAt)}">${isoDate(p.updatedAt)}</time></li>`;
 
-    const topicItems = p.topics
-      .slice(0, TOPIC_CAP)
-      .map((t) => `<li>${htmlEscape(t)}</li>`)
-      .join('');
-    const topicOverflow = p.topics.length > TOPIC_CAP
-      ? `<li>+${p.topics.length - TOPIC_CAP} more</li>`
-      : '';
     const topics = p.topics.length
-      ? `<ul class="topics" role="list">${topicItems}${topicOverflow}</ul>`
+      ? `<ul class="topics" role="list">${p.topics.slice(0, TOPIC_CAP).map((t) => `<li>${htmlEscape(t)}</li>`).join('')}</ul>`
       : '';
 
+    // The newest release is a link to its GitHub page. The label names the project,
+    // so two projects with the same tag do not give two links with the same name.
+    const release = p.releases?.[0];
+    const releaseText = release ? `${release.tag} · ${shortDate(release.publishedAt)}` : '';
     const also = [
       `<a href="${htmlEscape(p.repoUrl)}" aria-label="Source for ${htmlEscape(p.name)}">Source</a>`,
-      ...(p.hasLlms ? [`<a href="${htmlEscape(`${p.url}llms.txt`)}" aria-label="llms.txt for ${htmlEscape(p.name)}">llms.txt</a>`] : []),
-    ].join(' · ');
+      ...(release ? [`<a href="${htmlEscape(release.url)}" aria-label="${htmlEscape(`${releaseText}, release of ${p.name}`)}">${htmlEscape(release.tag)} · <time datetime="${isoDate(release.publishedAt)}">${shortDate(release.publishedAt)}</time></a>`] : []),
+    ].join('');
 
+    const classes = ['card', ...(p.featured ? ['featured', ...(solo ? ['solo'] : [])] : []),
+      ...(fill.has(p) ? [fill.get(p)] : [])].join(' ');
+    // The name link covers the whole card (its ::after element), so the name is the only
+    // link to the project site. The arrow is a cue for the eye and is hidden from a screen reader.
     return `
-      <li class="card${p.featured ? ` featured${solo ? ' solo' : ''}` : ''}">
+      <li class="${classes}">
         ${renderCardImage(p, { first: p === firstFeatured })}
         <div class="body">
-          ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a></h3>
+          ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a><span class="arrow" aria-hidden="true">→</span></h3>
           <p>${htmlEscape(p.description || 'No description provided.')}</p>
           ${topics}
         </div>
@@ -198,15 +222,15 @@ export function renderJsonLd(owner, projects, now) {
   return JSON.stringify(graph, null, 2).replace(/</g, '\\u003c');
 }
 
-function renderStats(projects) {
+/** One muted line of text beside the section heading, for example "7 project sites · 743 stars · 5 with releases". */
+export function renderStats(projects) {
   const stars = projects.reduce((n, p) => n + p.stars, 0);
-  const langs = languages(projects);
-  const items = [
-    `<li><strong>${projects.length}</strong> project ${projects.length === 1 ? 'site' : 'sites'}</li>`,
-    `<li><strong>${stars.toLocaleString('en-US')}</strong> ${stars === 1 ? 'star' : 'stars'}</li>`,
-    ...(langs.length ? [`<li title="${langs.map(htmlEscape).join(', ')}"><strong>${langs.length}</strong> ${langs.length === 1 ? 'language' : 'languages'}</li>`] : []),
-  ];
-  return items.join('');
+  const released = projects.filter((p) => p.releases?.length).length;
+  return [
+    `${projects.length} project ${projects.length === 1 ? 'site' : 'sites'}`,
+    `${stars.toLocaleString('en-US')} ${stars === 1 ? 'star' : 'stars'}`,
+    ...(released ? [`${released} with releases`] : []),
+  ].join(' · ');
 }
 
 // The meta name that each webmaster tool reads.

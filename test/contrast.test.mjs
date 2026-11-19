@@ -29,7 +29,8 @@ const ratio = (a, b) => {
 };
 
 const PAIRS = [['text', 'bg'], ['text', 'surface'], ['muted', 'bg'],
-  ['muted', 'surface'], ['accent', 'bg'], ['accent', 'surface']];
+  ['muted', 'surface'], ['accent', 'bg'], ['accent', 'surface'],
+  ['strong', 'bg'], ['strong', 'surface']];
 
 for (const scheme of ['light', 'dark']) {
   test(`${scheme} scheme meets 4.5:1 on every text pair`, () => {
@@ -51,4 +52,24 @@ test('the skip link stays readable against the accent it sits on', () => {
 
 test('both schemes define the same token set', () => {
   assert.deepEqual(Object.keys(tokens('light')).sort(), Object.keys(tokens('dark')).sort());
+});
+
+test('the card description is stronger than the small print, and the title is stronger than the description', () => {
+  for (const scheme of ['light', 'dark']) {
+    const t = tokens(scheme);
+    assert.ok(ratio(t.strong, t.surface) > ratio(t.muted, t.surface), scheme);
+    assert.ok(ratio(t.text, t.surface) > ratio(t.strong, t.surface), scheme);
+  }
+});
+
+test('the layout rules for large text, the skip link target and the card link are present', () => {
+  assert.ok(!/\.meta li \{[^}]*nowrap/.test(css));
+  assert.match(css, /\.meta li \{[^}]*overflow-wrap: anywhere/);
+  assert.match(css, /\.card h3 a \{[^}]*overflow-wrap: anywhere/);
+  assert.match(css, /main:focus \{ outline: none; \}/);
+  assert.match(css, /main \{ scroll-margin-top: 1rem; \}/);
+  assert.match(css, /\.card h3 a::after \{[^}]*position: absolute; inset: 0;/);
+  assert.match(css, /\.also a \{[^}]*z-index: 2;/);
+  const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+  assert.match(reduced, /\.arrow \{ transform: none; \}/);
 });

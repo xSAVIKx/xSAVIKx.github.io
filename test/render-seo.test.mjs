@@ -134,7 +134,7 @@ test('the releases feed is Atom, newest first, without drafts or pre-releases', 
   assert.match(feed, /<\/subtitle>[\s\S]*?<updated>2026-09-06T00:00:00Z<\/updated>/);
   assert.ok(feed.includes('<summary type="text">Notes for v1.2.0 &amp; more</summary>'));
   const html = await readFile(path.join(dir, 'index.html'), 'utf8');
-  assert.ok(html.includes('<li>Release v1.2.0</li>'));
+  assert.match(html, /<a href="[^"]+" aria-label="v1\.2\.0 · [^"]+, release of cloud-cache-action">v1\.2\.0 · <time /);
   assert.ok(html.includes('<link rel="alternate" type="application/atom+xml" href="/releases.xml"'));
   const json = JSON.parse(await readFile(path.join(dir, 'projects.json'), 'utf8'));
   const cca = json.projects.find((p) => p.name === 'cloud-cache-action');

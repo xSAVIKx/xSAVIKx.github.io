@@ -60,6 +60,38 @@ date on a card is the last human commit for the same reason.
 The count reads up to 5 pages of 100 commits for each project; past that, the
 count is a floor. An empty repository counts as zero.
 
+## Cards
+
+`renderCards` in `scripts/lib/render-html.mjs` writes one list item for each project.
+
+- **One link to the project site.** The project name is the link. Its `::after` element
+  covers the card, so a click or a tap on the art or the text opens the project site. The
+  accessible name is the project name. The arrow after the name is `aria-hidden`. It moves
+  on hover and on keyboard focus, and it does not move with `prefers-reduced-motion`.
+- **Other links.** "Source" and the release link have `z-index: 2`, so they stay above the
+  card link. A card has no llms.txt link. The hub `llms.txt` and `projects.json` link the
+  llms.txt of each project.
+- **Keyboard focus.** The focus ring goes around the card, inside its edge, because the
+  card clips its overflow.
+- **One fact line.** Language, stars (when more than zero) and the update date. The commit
+  count is the sort key and is not on the card.
+- **Topics.** A card shows 4 topics at most. `projects.json`, `llms-full.txt` and the
+  JSON-LD keep all topics.
+- **The last row.** The desktop grid has 6 tracks. `lastRowFill` finds the cards of an
+  incomplete last row. Two cards get the class `fill-2` and take 3 tracks each. One card
+  gets `fill-1` and takes the row, with its art beside the text. These classes have an
+  effect only from 64rem. The two-column layout (40rem to 64rem) can keep one card alone.
+- **Print.** The print block puts the card link back in the text flow and hides the arrow.
+
+The figures ("7 project sites · 743 stars · 5 with releases") are one muted line beside the
+"Project sites" heading (`renderStats`). The section heading (28 px) is larger than each
+card title (24 px featured, 22 px other). The card description uses the token `--strong`,
+which is darker than `--muted`. `--strong` is a hub token, not an identity token.
+
+Below 48rem, the header is compact: the avatar (56 px) is beside the name, and the profile
+links are in one row at 390 px. The footer links are a list with the `.links` layout, so
+each link has a 44 px target that does not overlap another target.
+
 ## Sitemap routing
 
 `/sitemap.xml` is a sitemap **index**, not a flat list of URLs. At build time
@@ -119,7 +151,8 @@ The build reads the releases of each project (`fetchReleases` in
 pre-releases are left out. A 404 gives no releases; another API error fails
 the build, the same as the commits API.
 
-- Each card shows the tag of the newest release.
+- Each card has a link to the GitHub page of the newest release, with the tag and the date
+  (for example "v1.2.3 · 12 Nov 2026"). The link is in the link row, after "Source".
 - `projects.json` has `latestRelease` for each project.
 - `/releases.xml` is an Atom feed of the 30 newest releases of all projects.
   Its `<updated>` is the newest release date, not the build time, so a rebuild
