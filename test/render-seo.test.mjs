@@ -157,3 +157,84 @@ test('fetchReleases treats a 404 as no releases and fails loud on other errors',
   assert.deepEqual(await fetchReleases(async () => ({ ok: false, status: 404 }), null, { name: 'x' }), []);
   await assert.rejects(() => fetchReleases(async () => ({ ok: false, status: 500 }), null, { name: 'x' }), /releases API failed for x: 500/);
 });
+
+// Feed rules. Each release names its project, as fetchReleases writes it.
+const feedRel = (project, tag, publishedAt, body = '') => ({
+  project, tag, name: tag, url: `https://github.com/x/${project}/releases/tag/${tag}`, publishedAt, body,
+});
+const feedTitles = (feed) => [...feed.matchAll(/<entry>[\s\S]*?<title>([^<]+)<\/title>/g)].map((m) => m[1]);
+
+test('the feed shows at most 3 entries for each project', async () => {
+  const { renderReleasesAtom, FEED_PER_PROJECT } = await import('../scripts/lib/render-seo.mjs');
+  assert.equal(FEED_PER_PROJECT, 3);
+  const busy = { name: 'busy', url: `${SITE_ORIGIN}/busy/`, releases: [5, 4, 3, 2, 1].map((d) => feedRel('busy', `v${d}`, `2026-11-0${d}T10:00:00Z`)) };
+  const calm = { name: 'calm', url: `${SITE_ORIGIN}/calm/`, releases: [feedRel('calm', 'v1', '2026-10-01T10:00:00Z')] };
+  const feed = renderReleasesAtom({ name: 'A' }, [busy, calm]);
+  assert.deepEqual(feedTitles(feed), ['busy v5', 'busy v4', 'busy v3', 'calm v1']);
+});
+
+test('releases of one project in the same minute become one entry', async () => {
+  const { renderReleasesAtom } = await import('../scripts/lib/render-seo.mjs');
+  const mono = { name: 'mono', url: `${SITE_ORIGIN}/mono/`, releases: [
+    feedRel('mono', 'go/v1', '2026-11-02T08:15:03Z', 'Go notes'),
+    feedRel('mono', 'python/v1', '2026-11-02T08:15:01Z', 'Python notes'),
+    feedRel('mono', 'corpus/v1', '2026-11-02T08:15:59Z', ''),
+    feedRel('mono', 'v0.9', '2026-11-02T08:16:00Z'),
+  ] };
+  // The same minute in another project stays a separate entry.
+  const other = { name: 'other', url: `${SITE_ORIGIN}/other/`, releases: [feedRel('other', 'v2', '2026-11-02T08:15:30Z')] };
+  const feed = renderReleasesAtom({ name: 'A' }, [mono, other]);
+  assert.deepEqual(feedTitles(feed), ['mono v0.9', 'mono corpus/v1, go/v1, python/v1', 'other v2']);
+  const merged = feed.match(/<entry>(?:(?!<\/entry>)[\s\S])*corpus\/v1, go[\s\S]*?<\/entry>/)[0];
+  // The entry takes the address and the date of the newest release, and the first note that has text.
+  assert.ok(merged.includes('<id>https://github.com/x/mono/releases/tag/corpus/v1</id>'));
+  assert.ok(merged.includes('<updated>2026-11-02T08:15:59Z</updated>'));
+  assert.ok(merged.includes('<summary type="text">Go notes</summary>'));
+  assert.equal((feed.match(/<entry>/g) ?? []).length, 3);
+});
+
+test('the feed drops a release older than 24 months, measured from the newest release', async () => {
+  const { renderReleasesAtom } = await import('../scripts/lib/render-seo.mjs');
+  const projects = [
+    { name: 'new', url: `${SITE_ORIGIN}/new/`, releases: [feedRel('new', 'v3', '2026-11-18T14:07:00Z'), feedRel('new', 'v2', '2024-11-18T14:07:00Z'), feedRel('new', 'v1', '2024-11-18T14:06:59Z')] },
+    { name: 'old', url: `${SITE_ORIGIN}/old/`, releases: [feedRel('old', 'v0.1', '2020-12-27T00:00:00Z')] },
+  ];
+  const feed = renderReleasesAtom({ name: 'A' }, projects);
+  assert.deepEqual(feedTitles(feed), ['new v3', 'new v2']);
+  // The wall clock is not an input: old data alone still gives its newest release.
+  assert.deepEqual(feedTitles(renderReleasesAtom({ name: 'A' }, [projects[1]])), ['old v0.1']);
+  assert.equal(feed, renderReleasesAtom({ name: 'A' }, projects));
+});
+
+test('the feed subtitle says in plain words what the file is', async () => {
+  const { renderReleasesAtom } = await import('../scripts/lib/render-seo.mjs');
+  const subtitle = renderReleasesAtom({ name: 'Ann & Co' }, []).match(/<subtitle>([^<]+)<\/subtitle>/)[1];
+  assert.match(subtitle, /^This file is a release feed\./);
+  assert.match(subtitle, /feed reader/);
+  assert.match(subtitle, /at most 3 entries for each project, from the last 24 months/);
+  assert.ok(subtitle.includes('Ann &amp; Co'));
+});
+
+test('a summary is the first paragraph of the notes without Markdown marks', async () => {
+  const { plainSummary, renderReleasesAtom } = await import('../scripts/lib/render-seo.mjs');
+  assert.equal(plainSummary("## What's Changed\r\n\r\n**Fixed** the `cache` key in [the action](https://e/x) and _more_.\r\n\r\nSecond paragraph."),
+    'Fixed the cache key in the action and more.');
+  assert.equal(plainSummary('### Pull\n\n- `docker pull a`\n- `docker pull b`\n\nText'), 'docker pull a; docker pull b');
+  assert.equal(plainSummary('# Title\nLine one\nline two with snake_case_name\n\nNext'), 'Line one line two with snake_case_name');
+  assert.equal(plainSummary('<!-- note -->\n\n> A quote with <b>bold</b>'), 'A quote with bold');
+  assert.equal(plainSummary('## Only a heading'), '');
+  assert.equal(plainSummary(''), '');
+  const feed = renderReleasesAtom({ name: 'A' }, [{ name: 'p', url: `${SITE_ORIGIN}/p/`, releases: [feedRel('p', 'v1', '2026-01-01T00:00:00Z', '## Head')] }]);
+  assert.ok(!feed.includes('<summary'));
+});
+
+test('each feed entry also links to the project site', async () => {
+  const { renderReleasesAtom } = await import('../scripts/lib/render-seo.mjs');
+  const feed = renderReleasesAtom({ name: 'A' }, [
+    { name: 'p', url: `${SITE_ORIGIN}/p/`, releases: [feedRel('p', 'v1', '2026-01-01T00:00:00Z')] },
+    { name: 'q', releases: [feedRel('q', 'v1', '2025-12-01T00:00:00Z')] },
+  ]);
+  assert.ok(feed.includes(`<link rel="related" type="text/html" href="${SITE_ORIGIN}/p/" title="p project site"/>`));
+  assert.equal((feed.match(/rel="related"/g) ?? []).length, 1);
+  assert.equal((feed.match(/rel="alternate" type="text\/html" href="https:\/\/github/g) ?? []).length, 2);
+});

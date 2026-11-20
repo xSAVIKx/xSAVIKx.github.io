@@ -16,15 +16,44 @@
 </head>
 <body>
 <div class="wrap">
-<main id="main">
+<main id="main" class="notfound">
   <h1>Page not found</h1>
   <p>Nothing is published at that address. It may have moved, or the link may be
      missing part of a project path.</p>
+  <p id="suggest" class="suggest" hidden></p>
   <ul class="links" role="list">
     <li><a href="/">All project sites</a></li>
     <li><a href="https://serhiichuk.dev/">serhiichuk.dev</a></li>
   </ul>
+  <h2 id="sites-title">Project sites</h2>
+  <ul id="sites" class="links" role="list" aria-labelledby="sites-title">
+    {{SITES}}
+  </ul>
 </main>
 </div>
+<script>
+// A project path is case-sensitive. When only the case of the first segment is wrong,
+// show a link to the correct path. The names come from the list above.
+(function () {
+  var parts = location.pathname.split('/');
+  var seg = parts[1] || '';
+  try { seg = decodeURIComponent(seg); } catch (e) { return; }
+  if (!seg) return;
+  var links = document.querySelectorAll('#sites a[data-name]');
+  for (var i = 0; i < links.length; i += 1) {
+    var name = links[i].getAttribute('data-name');
+    if (name !== seg && name.toLowerCase() === seg.toLowerCase()) {
+      var path = '/' + encodeURIComponent(name) + '/' + parts.slice(2).join('/');
+      var a = document.createElement('a');
+      a.href = path + location.search + location.hash;
+      a.textContent = path;
+      var box = document.getElementById('suggest');
+      box.append('Did you mean ', a, '?');
+      box.hidden = false;
+      return;
+    }
+  }
+}());
+</script>
 </body>
 </html>

@@ -55,7 +55,7 @@ export async function build({
 
   const generated = {
     'index.html': renderIndex({ template: indexTemplate, owner, projects, now, verification }),
-    '404.html': render404(template404),
+    '404.html': render404(template404, projects),
     // Templated rather than copied: it names the host, which must follow SITE_ORIGIN.
     'site.webmanifest': fill(manifestTemplate, { HOST: htmlEscape(SITE_HOST) }),
     'robots.txt': renderRobots(),

@@ -285,6 +285,17 @@ export function renderIndex({ template, owner, projects, now, verification = {} 
   });
 }
 
-export function render404(template) {
-  return fill(template, { ORIGIN: htmlEscape(SITE_ORIGIN), HOST: htmlEscape(SITE_HOST) });
+/** The project sites as links for the 404 page. The script of that page reads data-name. */
+export function render404Sites(projects) {
+  return projects.map((p) =>
+    `<li><a href="${htmlEscape(new URL(p.url).pathname)}" data-name="${htmlEscape(p.name)}">${htmlEscape(p.name)}</a></li>`)
+    .join('\n    ');
+}
+
+export function render404(template, projects = []) {
+  return fill(template, {
+    ORIGIN: htmlEscape(SITE_ORIGIN),
+    HOST: htmlEscape(SITE_HOST),
+    SITES: render404Sites(projects),
+  });
 }

@@ -154,12 +154,48 @@ the build, the same as the commits API.
 - Each card has a link to the GitHub page of the newest release, with the tag and the date
   (for example "v1.2.3 · 12 Nov 2026"). The link is in the link row, after "Source".
 - `projects.json` has `latestRelease` for each project.
-- `/releases.xml` is an Atom feed of the 30 newest releases of all projects.
-  Its `<updated>` is the newest release date, not the build time, so a rebuild
-  without a new release writes the same file. A long release note is cut to
-  1000 characters; the entry link leads to the full note.
-- The cap of 5 releases for each project stops one busy repository (for
-  example a monorepo that releases many packages) from filling the feed.
+- `/releases.xml` is an Atom feed of the releases of all projects, newest first.
+  `feedEntries` in `scripts/lib/render-seo.mjs` applies the feed rules below.
+- The cap of 5 releases for each project is the input of the feed and of the cards.
+
+The feed rules, in this order:
+
+1. Drop a release that is older than 24 months (`FEED_MAX_AGE_MONTHS`). The build measures
+   the age from the newest release date in the data, not from the wall clock. Thus the
+   same data gives the same file.
+2. Releases of one project published in the same minute become one entry. The title lists
+   the tags, for example "okf-skills skills/a/v1, skills/b/v1". The entry has the address
+   and the date of the newest release of the group.
+3. Keep at most 3 entries for each project (`FEED_PER_PROJECT`), so one busy project
+   cannot fill the feed.
+4. Keep at most 30 entries in all (`FEED_ENTRIES`).
+
+Other facts about the feed:
+
+- Its `<updated>` is the newest release date, not the build time, so a rebuild
+  without a new release writes the same file.
+- Its `<subtitle>` says in plain words what the file is, for a person who opens it in a browser.
+- A `<summary>` is the first paragraph of the release note without Markdown marks
+  (`plainSummary`). A heading is not a paragraph. The items of a list become one line.
+  A summary has 1000 characters at most; the entry link leads to the full note.
+- Each entry has a `rel="alternate"` link to the release on GitHub and a `rel="related"`
+  link to the project site.
+- The page has three links to the feed: `<link rel="alternate">` in the head, "Release feed"
+  in the row of the "Project sites" heading, and "Atom feed" in the footer.
+
+## The 404 page
+
+GitHub Pages serves `404.html` for each address that no site under the origin has.
+`render404` in `scripts/lib/render-html.mjs` fills `src/404.html`.
+
+- The page is `noindex`.
+- The page lists the project sites. The list comes from the same project data as the cards.
+- A project path is case-sensitive. A small inline script compares the first segment of the
+  path with the project names. When only the case is different (`/androidscreencast/` and
+  `/AndroidScreencast/`), the page shows "Did you mean /AndroidScreencast/?" with a link.
+  The link keeps the rest of the path, the query and the fragment.
+- The script reads the names from the `data-name` attributes of the list. It loads nothing.
+  Without JavaScript the list is still there.
 
 ## Search engine verification
 

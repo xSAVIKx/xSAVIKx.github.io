@@ -169,28 +169,108 @@ export function renderProjectsJson(owner, projects, now) {
 
 /** The feed shows this many entries in all, newest first. */
 export const FEED_ENTRIES = 30;
+/** The feed shows this many entries of one project at most, so one busy project cannot fill it. */
+export const FEED_PER_PROJECT = 3;
+/** The feed drops a release that is older than this, measured from the newest release in the data. */
+export const FEED_MAX_AGE_MONTHS = 24;
 // A release note can be long. The entry keeps the start; the link leads to the rest.
 const SUMMARY_CHARS = 1000;
+
+/** Removes the Markdown marks from one line of text. The words stay. */
+function plainLine(line) {
+  return line
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<\/?[a-zA-Z][^>]*>/g, '')
+    .replace(/^\s{0,3}(?:>\s?)+/, '')
+    .replace(/^\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?/, '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1')
+    .replace(/`+/g, '')
+    .replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, '$2')
+    .replace(/(^|[^\w*])\*(?=\S)([^*]+?)(?<=\S)\*(?![\w*])/g, '$1$2')
+    .replace(/(^|[^\w_])_(?=\S)([^_]+?)(?<=\S)_(?![\w_])/g, '$1$2')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * The first paragraph of a release note as plain text. A heading, a rule, a code fence line and
+ * an empty block are not a paragraph. The items of a list become one line with "; " between them.
+ */
+export function plainSummary(body) {
+  const blocks = String(body ?? '').replace(/\r\n?/g, '\n').split(/\n\s*\n/);
+  for (const block of blocks) {
+    const lines = block.split('\n')
+      .filter((l) => !/^\s{0,3}(?:#{1,6}(?:\s|$)|```|~~~|(?:[-*_]\s*){3,}$|=+\s*$)/.test(l));
+    const isList = lines.length > 1 && lines.every((l) => /^\s*(?:[-*+]|\d+[.)])\s+/.test(l));
+    const text = lines.map(plainLine).filter(Boolean).join(isList ? '; ' : ' ');
+    if (text) return text.length > SUMMARY_CHARS ? `${text.slice(0, SUMMARY_CHARS).trimEnd()} …` : text;
+  }
+  return '';
+}
+
+/**
+ * The entries of the feed, newest first. The rules, in this order:
+ * 1. Drop a release older than FEED_MAX_AGE_MONTHS, measured from the newest release in the data.
+ *    The wall clock is not an input, so the same data gives the same file.
+ * 2. Releases of one project published in the same minute become one entry.
+ * 3. Keep FEED_PER_PROJECT entries of each project, then FEED_ENTRIES entries in all.
+ */
+export function feedEntries(projects) {
+  const all = projects.flatMap((p) => (p.releases ?? []).map((r) => ({ ...r, site: p.url ?? null })));
+  if (all.length === 0) return [];
+  const newest = new Date(all.reduce((max, r) => (r.publishedAt > max ? r.publishedAt : max), all[0].publishedAt));
+  const cutoff = new Date(newest);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - FEED_MAX_AGE_MONTHS);
+  const groups = new Map();
+  for (const r of all) {
+    if (new Date(r.publishedAt) < cutoff) continue;
+    const key = `${r.project}\n${r.publishedAt.slice(0, 16)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+  const perProject = new Map();
+  return [...groups.values()]
+    .map((list) => {
+      const releases = list.toSorted((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.tag.localeCompare(b.tag));
+      const [first] = releases;
+      return {
+        project: first.project,
+        site: first.site,
+        url: first.url,
+        publishedAt: first.publishedAt,
+        tags: releases.map((r) => r.tag),
+        summary: releases.map((r) => plainSummary(r.body)).find(Boolean) ?? '',
+      };
+    })
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.project.localeCompare(b.project))
+    .filter((e) => {
+      const n = (perProject.get(e.project) ?? 0) + 1;
+      perProject.set(e.project, n);
+      return n <= FEED_PER_PROJECT;
+    })
+    .slice(0, FEED_ENTRIES);
+}
 
 /**
  * An Atom feed of the latest releases of all projects. Its <updated> is the newest
  * release date, not the build time, so a rebuild without a new release gives the same file.
  */
 export function renderReleasesAtom(owner, projects) {
-  const entries = projects.flatMap((p) => p.releases ?? [])
-    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt) || a.project.localeCompare(b.project))
-    .slice(0, FEED_ENTRIES);
+  const entries = feedEntries(projects);
   const updated = entries[0]?.publishedAt ?? '1970-01-01T00:00:00Z';
-  const summaryOf = (body) => (body.length > SUMMARY_CHARS ? `${body.slice(0, SUMMARY_CHARS).trimEnd()} …` : body);
-  const items = entries.map((r) => [
+  const items = entries.map((e) => [
     '  <entry>',
-    `    <id>${xmlEscape(r.url)}</id>`,
-    `    <title>${xmlEscape(`${r.project} ${r.tag}`)}</title>`,
-    `    <link rel="alternate" type="text/html" href="${xmlEscape(r.url)}"/>`,
-    `    <updated>${xmlEscape(r.publishedAt)}</updated>`,
-    `    <published>${xmlEscape(r.publishedAt)}</published>`,
-    `    <category term="${xmlEscape(r.project)}"/>`,
-    ...(r.body ? [`    <summary type="text">${xmlEscape(summaryOf(r.body))}</summary>`] : []),
+    `    <id>${xmlEscape(e.url)}</id>`,
+    `    <title>${xmlEscape(`${e.project} ${e.tags.join(', ')}`)}</title>`,
+    `    <link rel="alternate" type="text/html" href="${xmlEscape(e.url)}"/>`,
+    ...(e.site ? [`    <link rel="related" type="text/html" href="${xmlEscape(e.site)}" title="${xmlEscape(`${e.project} project site`)}"/>`] : []),
+    `    <updated>${xmlEscape(e.publishedAt)}</updated>`,
+    `    <published>${xmlEscape(e.publishedAt)}</published>`,
+    `    <category term="${xmlEscape(e.project)}"/>`,
+    ...(e.summary ? [`    <summary type="text">${xmlEscape(e.summary)}</summary>`] : []),
     '  </entry>',
   ].join('\n'));
   return [
@@ -198,7 +278,9 @@ export function renderReleasesAtom(owner, projects) {
     '<feed xmlns="http://www.w3.org/2005/Atom">',
     `  <id>${SITE_ORIGIN}/releases.xml</id>`,
     `  <title>${xmlEscape(`${owner.name} — open-source releases`)}</title>`,
-    `  <subtitle>The latest releases of the projects listed on ${xmlEscape(SITE_ORIGIN)}.</subtitle>`,
+    `  <subtitle>${xmlEscape(`This file is a release feed. It lists the new releases of the open-source projects of ${owner.name}. `
+      + `Add its address to a feed reader to get each new release. It shows at most ${FEED_PER_PROJECT} entries for each project, `
+      + `from the last ${FEED_MAX_AGE_MONTHS} months. The project list is at ${SITE_ORIGIN}/`)}</subtitle>`,
     `  <link rel="self" type="application/atom+xml" href="${SITE_ORIGIN}/releases.xml"/>`,
     `  <link rel="alternate" type="text/html" href="${SITE_ORIGIN}/"/>`,
     `  <updated>${xmlEscape(updated)}</updated>`,

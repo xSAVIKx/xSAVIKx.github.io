@@ -250,7 +250,7 @@ test('every card carries decorative art hidden from assistive technology', () =>
 
 test('the figures are one line of text beside the section heading', () => {
   const stars = projects.reduce((n, p) => n + p.stars, 0);
-  assert.ok(html.includes(`<h2>Project sites</h2>\n    <p class="stats">${projects.length} project sites · ${stars} stars</p>`));
+  assert.ok(html.includes(`<h2>Project sites</h2>\n    <div class="section-side">\n      <p class="stats">${projects.length} project sites · ${stars} stars</p>`));
   assert.ok(!html.includes('<strong>'));
   const list = [{ stars: 700, releases: [{}] }, { stars: 43, releases: [] }, { stars: 0 }];
   assert.equal(renderStats(list), '3 project sites · 743 stars · 1 with releases');
@@ -349,4 +349,56 @@ test('featured card art is the first-screen paint, so it is not lazy and the fir
   const out = renderCards([{ ...card, name: 'a' }, { ...card, name: 'b' }, { ...card, name: 'c', featured: false }]);
   assert.equal((out.match(/fetchpriority="high"/g) || []).length, 1);
   assert.equal((out.match(/loading="lazy"/g) || []).length, 1);
+});
+
+test('the 404 page lists the project sites from the project data', () => {
+  const out = render404(template404, projects);
+  assert.ok(!/\{\{[A-Z_]+\}\}/.test(out));
+  for (const p of projects) {
+    assert.ok(out.includes(`<li><a href="/${p.name}/" data-name="${p.name}">${p.name}</a></li>`), `missing ${p.name}`);
+  }
+  assert.equal((out.match(/<h1[ >]/g) ?? []).length, 1);
+  assert.ok(out.includes('name="robots" content="noindex"'));
+  assert.ok(out.includes('<main id="main" class="notfound">'));
+  // A name is data, not markup.
+  const odd = render404(template404, [{ name: 'a"<b', url: 'https://xsavikx.github.io/a%22%3Cb/' }]);
+  assert.ok(odd.includes('data-name="a&quot;&lt;b"'));
+});
+
+test('the 404 page has an inline script that offers the correct case of a project path', () => {
+  const out = render404(template404, projects);
+  const scripts = [...out.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+  assert.equal(scripts.length, 1);
+  assert.ok(!/\bsrc=/.test(scripts[0][1]), 'the script must be inline');
+  assert.ok(out.includes('<p id="suggest" class="suggest" hidden></p>'));
+  assert.ok(scripts[0][2].includes('Did you mean '));
+  assert.doesNotMatch(scripts[0][2], /innerHTML|https?:\/\//);
+
+  // Run the script against a small stand-in for the page.
+  const run = (pathname) => {
+    const box = { hidden: true, parts: [], append(...p) { this.parts.push(...p); } };
+    const links = projects.map((p) => ({ getAttribute: () => p.name }));
+    const document = {
+      querySelectorAll: () => links,
+      createElement: () => ({}),
+      getElementById: () => box,
+    };
+    new Function('document', 'location', scripts[0][2])(document, { pathname, search: '?a=1', hash: '#top' });
+    return box;
+  };
+  const hit = run('/androidscreencast/docs/page.html');
+  assert.equal(hit.hidden, false);
+  assert.equal(hit.parts[1].href, '/AndroidScreencast/docs/page.html?a=1#top');
+  assert.equal(hit.parts[1].textContent, '/AndroidScreencast/docs/page.html');
+  assert.equal(run('/AndroidScreencast/missing').hidden, true, 'an exact name gets no suggestion');
+  assert.equal(run('/no-such-project/').hidden, true);
+  assert.equal(run('/').hidden, true);
+  assert.equal(run('/%E0%A4%A/').hidden, true, 'a malformed path must not throw');
+});
+
+test('the Project sites row has a visible link to the release feed', () => {
+  const head = html.match(/<div class="section-head">[\s\S]*?<ul class="cards"/)[0];
+  assert.match(head, /<a class="feed-link" href="\/releases\.xml"><svg aria-hidden="true"[^>]*>[\s\S]*?<\/svg>Release feed<\/a>/);
+  assert.ok(html.includes('<link rel="alternate" type="application/atom+xml" href="/releases.xml" title="Releases">'));
+  assert.ok(html.includes('<li><a href="/releases.xml">Atom feed</a></li>'));
 });
