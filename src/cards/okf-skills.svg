@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 192" width="640" height="192">
-<style>.s{fill:none;stroke:#006f8c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#006f8c}.d{stroke-dasharray:2 10}.q{opacity:.45}text{font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#006f8c}@media(prefers-color-scheme:dark){.s{stroke:#5fd6f2}.f,text{fill:#5fd6f2}}</style>
-<rect width="640" height="192" fill="#00add8" opacity=".14"/>
-<rect width="192" height="192" fill="#00add8" opacity=".16"/>
+<style>.s{fill:none;stroke:#5433b8;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#5433b8}.d{stroke-dasharray:2 10}.q{opacity:.7}text{font:600 24px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#5433b8}@media(prefers-color-scheme:dark){.s{stroke:#baa3fd}.f,text{fill:#baa3fd}}</style>
+<rect width="640" height="192" fill="#7048e8" opacity=".14"/>
+<rect width="192" height="192" fill="#7048e8" opacity=".16"/>
 
 <path class="s" d="M96 60c-14-10-32-12-52-10v86c20-2 38 0 52 10 14-10 32-12 52-10V50c-20-2-38 0-52 10zM96 60v86"/><path class="s t q" d="M58 74h24M58 92h24M58 110h24M110 74h24M110 92h24M110 110h24"/>
 <path class="s t" d="M290 96l80-48M290 96l80 52M370 48l90 20M370 148l90-80M460 68l100-28M460 68l90 74M370 148l180-6"/>

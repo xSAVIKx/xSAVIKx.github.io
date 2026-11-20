@@ -127,6 +127,16 @@ must stay visible on narrow cards.
 `test/render-art.test.mjs` checks the badge letters for 4.5:1 contrast on every
 language colour.
 
+The files in `src/cards/` follow these rules, and `test/cards.test.mjs` checks them:
+
+- Each project has its own tint. The tint is not the language colour. Each tint
+  is 30 degrees of hue or more from each other tint.
+- Each file has one ink colour for the light scheme and one for the dark scheme.
+  The ink has 4.5:1 contrast on the tint. The faded lines (class `q`) have 3:1.
+- A label is 24 px in the 640 px view box. That is 13.5 px on a card 360 px wide.
+- A label has a `textLength`, so the label stays in its box with each font.
+- Each file is in the card size budget of `check-dist.mjs`.
+
 ## Structured data
 
 The JSON-LD graph has a `Person`, a `WebSite`, and the page itself as both

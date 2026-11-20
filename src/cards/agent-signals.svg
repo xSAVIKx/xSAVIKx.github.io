@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 192" width="640" height="192">
-<style>.s{fill:none;stroke:#2f6b12;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#2f6b12}.d{stroke-dasharray:2 10}.q{opacity:.45}text{font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#2f6b12}@media(prefers-color-scheme:dark){.s{stroke:#a6ee6e}.f,text{fill:#a6ee6e}}</style>
+<style>.s{fill:none;stroke:#2f6b12;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#2f6b12}.d{stroke-dasharray:2 10}.q{opacity:.7}text{font:600 24px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#2f6b12}@media(prefers-color-scheme:dark){.s{stroke:#a6ee6e}.f,text{fill:#a6ee6e}}</style>
 <rect width="640" height="192" fill="#89e051" opacity=".14"/>
 <rect width="192" height="192" fill="#89e051" opacity=".16"/>
 

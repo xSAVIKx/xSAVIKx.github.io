@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 192" width="640" height="192">
-<style>.s{fill:none;stroke:#0b6b3a;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#0b6b3a}.d{stroke-dasharray:2 10}.q{opacity:.45}text{font:600 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#0b6b3a}@media(prefers-color-scheme:dark){.s{stroke:#7be8ac}.f,text{fill:#7be8ac}}</style>
-<rect width="640" height="192" fill="#3ddc84" opacity=".14"/>
-<rect width="192" height="192" fill="#3ddc84" opacity=".16"/>
+<style>.s{fill:none;stroke:#0a6259;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.t{stroke-width:2}.f{fill:#0a6259}.d{stroke-dasharray:2 10}.q{opacity:.7}text{font:600 24px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#0a6259}@media(prefers-color-scheme:dark){.s{stroke:#6fe3d2}.f,text{fill:#6fe3d2}}</style>
+<rect width="640" height="192" fill="#14b8a6" opacity=".14"/>
+<rect width="192" height="192" fill="#14b8a6" opacity=".16"/>
 
 <rect class="s" x="68" y="38" width="56" height="116" rx="10"/><path class="s" d="M88 50h16"/><circle class="f" cx="96" cy="140" r="4"/>
 <path class="s t" d="M82 92l10 10 18-20"/>
