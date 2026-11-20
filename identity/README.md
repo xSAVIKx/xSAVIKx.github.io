@@ -57,7 +57,8 @@ in a bundle only where it is safe for that stack.
 | Print: hide navigation | `nav` | `.VPNav`, `.VPLocalNav`, `.VPSidebar`, `.VPDocAside` | no, the framework does it | no |
 | Print: body-text links and inline code in the text colour | no | yes | no | no |
 | Print: hide decorative art | `img[alt=""]`, `svg[aria-hidden="true"]` | no | no | no |
-| Footer line `.ys-footer-line` | yes | yes | yes | yes |
+| Back link `.ys-back-link` (since 1.2.0) | yes | yes | yes | yes |
+| Footer line `.ys-footer-line` (1.1.0, kept) | yes | yes | yes | yes |
 
 ### Focus ring
 
@@ -103,19 +104,29 @@ on each sheet. It prints body-text links and inline code in the text colour,
 because the dark brand colour is too light on white paper. It does not change
 the colours of a highlighted code block.
 
-### Footer line
+### Back link
 
-Each project site links to the hub with one line. Copy this snippet into the
-footer of the site:
+Each project site links to the hub with one link. The name of the hub is
+"More projects" on each site. Copy this snippet into the footer of the site:
 
 ```html
-<p class="ys-footer-line">Part of <a href="https://xsavikx.github.io/">Yurii Serhiichuk's open-source projects</a></p>
+<a class="ys-back-link" href="https://xsavikx.github.io/">More projects</a>
 ```
 
-The class makes the line small and muted. The link has the colour of the line
-and an underline. The class works on other elements also. Use a `<span>` where
-the framework puts the text in its own `<p>`, for example in the
-`footer.message` of VitePress or the `copyright` of MkDocs Material.
+- The class goes on the `<a>` element. The link is small and muted, and it has
+  an underline.
+- The link is a touch target of at least 44 px by 44 px (`--ys-tap`). The text
+  is in the middle of the target.
+- The focus ring uses `--ys-focus-width` and `--ys-focus-offset`. Its colour is
+  `--ys-focus-color`, or the colour of the link when the site does not set it.
+- In the Material footer, the link uses the footer colours of Material.
+- In print, the address of the hub shows after the link.
+- A translated site can translate the text of the link. Keep the class and the
+  address.
+
+The 1.1.0 class `.ys-footer-line` stays in each bundle, so a site that uses it
+does not break. Its link is not a 44 px target. Replace it with the snippet
+above when you update a site.
 
 ## Adopt it in a project site
 
@@ -124,15 +135,15 @@ the framework puts the text in its own `<p>`, for example in the
 2. Load it after the site's own theme CSS.
 3. Map any site-specific neutral variable to a `--ys-*` variable. Keep the
    brand variables as they are.
-4. Add the footer line that links to the hub: "Part of Yurii Serhiichuk's
-   open-source projects". Use the snippet in "Footer line" above.
+4. Add the back link to the hub: "More projects". Use the snippet in
+   "Back link" above.
 5. Check contrast for any brand colour that sits on the new neutrals.
 
 To update, copy the new bundle again. The first line of each bundle names the
 version and a hash:
 
 ```
-/*! ys-tokens 1.1.0 ys-vitepress.css sha256:…
+/*! ys-tokens 1.2.0 ys-vitepress.css sha256:…
 ```
 
 A site can compare that line with the published copy at
@@ -162,6 +173,19 @@ This site uses the shared identity from xSAVIKx/xSAVIKx.github.io/identity.
 ```
 
 ## Changelog
+
+### 1.2.0 (2026-11-20)
+
+A minor version. It adds one class. It does not change or remove a 1.1.0
+variable or rule.
+
+- New class `.ys-back-link` in each adapter bundle: the "More projects" link to
+  the hub, with a touch target of at least 44 px by 44 px and a focus ring.
+- The name of the hub is "More projects" on each site. The snippet changes to
+  `<a class="ys-back-link" href="https://xsavikx.github.io/">More projects</a>`.
+- `.ys-footer-line` stays as it was in 1.1.0. New pages do not use it.
+
+A site that updates from 1.1.0 does not change until it uses the new class.
 
 ### 1.1.0 (2026-11-19)
 

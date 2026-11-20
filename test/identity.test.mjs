@@ -92,7 +92,8 @@ for (const scheme of ['light', 'dark']) {
 
 test('the focus ring uses the site variable with the fallback from the tokens', () => {
   const ring = `outline: var(--ys-focus-width) solid var(--ys-focus-color, var(--ys-${t.focus.fallback}))`;
-  const withRing = adapterBundles.filter(([, css]) => css.includes(':focus-visible')).map(([name]) => name);
+  // The back link has its own ring in each bundle. This test is about the general ring.
+  const withRing = adapterBundles.filter(([, css]) => /(^|[\s,}]):focus-visible/.test(css)).map(([name]) => name);
   // VitePress and MkDocs Material keep their own focus styles. See identity/README.md.
   assert.deepEqual(withRing, ['ys-plain.css', 'ys-jekyll-cayman.css']);
   for (const [name, css] of adapterBundles) {
@@ -146,9 +147,28 @@ test('every adapter bundle styles the footer line with the muted colour', () => 
   }
 });
 
-test('the README has the footer snippet with the hub link', () => {
+// Identity 1.2: the back link "More projects" with a 44 px touch target.
+
+test('every adapter bundle has the back link with a 44 px touch target and a focus ring', () => {
+  assert.equal(t.misc.tap, '44px');
+  for (const [name, css] of adapterBundles) {
+    const rule = css.match(/(?:^|\n)\.ys-back-link \{([^}]*)\}/)?.[1] ?? '';
+    assert.match(rule, /display: inline-flex;/, `${name} inline-flex`);
+    assert.match(rule, /min-height: var\(--ys-tap\);/, `${name} min-height`);
+    assert.match(rule, /min-width: var\(--ys-tap\);/, `${name} min-width`);
+    assert.match(rule, /padding: 0 var\(--ys-space-\d+\);/, `${name} padding`);
+    assert.match(rule, /color: var\(--ys-muted\);/, `${name} muted colour`);
+    assert.match(css, /\.ys-back-link:focus-visible \{ outline: var\(--ys-focus-width\) solid var\(--ys-focus-color, currentColor\); outline-offset: var\(--ys-focus-offset\);/,
+      `${name} focus ring`);
+    assert.match(mediaBlocks(css, 'print'), /\.ys-back-link\[href\^="http"\]::after/, `${name} prints the hub address`);
+  }
+  assert.ok(!Object.fromEntries(bundles)['ys-tokens.css'].includes('.ys-back-link'), 'ys-tokens.css has variables only');
+});
+
+test('the README has the back link snippet with the hub name "More projects"', () => {
   const readme = readFileSync(new URL('../identity/README.md', import.meta.url), 'utf8');
-  assert.ok(readme.includes('<p class="ys-footer-line">Part of <a href="https://xsavikx.github.io/">Yurii Serhiichuk\'s open-source projects</a></p>'));
+  assert.ok(readme.includes('<a class="ys-back-link" href="https://xsavikx.github.io/">More projects</a>'));
+  assert.ok(!readme.includes("Yurii Serhiichuk's open-source projects"), 'the old hub name is not in the README');
   assert.ok(readme.includes(`## Changelog`) && readme.includes(`### ${t.version}`), 'the changelog names the version');
 });
 

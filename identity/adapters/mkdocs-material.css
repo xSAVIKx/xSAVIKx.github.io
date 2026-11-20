@@ -17,3 +17,5 @@ body, input { font-family: var(--ys-font-sans); }
  * Print and reduced motion: Material has its own rules. The identity adds only the print colours. */
 /* Footer line: the Material footer is dark in both schemes, so the line uses the footer colours and sizes. */
 .md-footer .ys-footer-line { color: var(--md-footer-fg-color--light); font-size: 0.64rem; }
+/* Back link (since 1.2.0): the same footer colours and sizes. */
+.md-footer .ys-back-link { color: var(--md-footer-fg-color--light); font-size: 0.64rem; }
