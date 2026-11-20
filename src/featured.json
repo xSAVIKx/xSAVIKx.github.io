@@ -1,4 +1,29 @@
 {
-  "_comment": "Project sites to show first, in this order, as wide Featured cards. Use repository names. The other sites follow by activity. See docs/ARCHITECTURE.md.",
-  "featured": ["aws-emulator-docker", "cloud-cache-action"]
+  "_comment": "Hand-made data for the project list. 'featured': the project sites to show first, in this order, as wide Featured cards. 'projects': texts that replace the GitHub values of one project (displayName, description, language). Use repository names. After a change of 'featured' or of a displayName of a featured project, run `npm run og`. See docs/ARCHITECTURE.md.",
+  "featured": [
+    "aws-emulator-docker",
+    "cloud-cache-action"
+  ],
+  "projects": {
+    "aws-emulator-docker": {
+      "displayName": "AWS Emulator Docker Image",
+      "language": "Dockerfile"
+    },
+    "cloud-cache-action": {
+      "displayName": "Cloud Cache Action"
+    },
+    "sre-agent": {
+      "displayName": "SRE Agent Workshop",
+      "description": "A workshop and a template for an SRE agent on Google Cloud, built with ADK and the Antigravity SDK. The agent reads traces and logs, finds the bottleneck and writes the post-mortem."
+    },
+    "okf-skills": {
+      "description": "Agent skills that turn database schemas, file trees and commit history into an Open Knowledge Format (OKF) catalog your agent can read. Each connector is a single binary and works over MCP."
+    },
+    "geo-coordinates": {
+      "displayName": "Coordinates on the globe"
+    },
+    "AndroidScreencast": {
+      "description": "View and control your Android device from a PC over ADB, even when the screen is broken. No app needed on the phone."
+    }
+  }
 }

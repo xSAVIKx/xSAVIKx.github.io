@@ -3,13 +3,15 @@ import { mkdir, writeFile, copyFile, readFile, readdir, rm } from 'node:fs/promi
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import {
-  fetchAllRepos, fetchOwner, selectProjects, enrichAll, addActivity, addReleases, orderProjects, SITE_HOST,
+  fetchAllRepos, fetchOwner, selectProjects, enrichAll, addActivity, addReleases, orderProjects,
+  applyOverrides, SITE_HOST,
 } from './lib/discover.mjs';
 import {
   renderRobots, renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull,
   renderProjectsJson, renderReleasesAtom,
 } from './lib/render-seo.mjs';
 import { renderIndex, render404, fill, htmlEscape } from './lib/render-html.mjs';
+import { OG_PERSON } from './lib/render-og.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(ROOT, 'src');
@@ -20,13 +22,14 @@ export async function build({
   token = process.env.GITHUB_TOKEN,
   now = new Date(),
   outDir = DIST,
+  warn = console.warn,
 } = {}) {
   const [owner, repos] = await Promise.all([
     fetchOwner(fetchFn, token),
     fetchAllRepos(fetchFn, token),
   ]);
 
-  const { featured } = JSON.parse(await readFile(path.join(SRC, 'featured.json'), 'utf8'));
+  const { featured, projects: overrides } = JSON.parse(await readFile(path.join(SRC, 'featured.json'), 'utf8'));
   const verification = JSON.parse(await readFile(path.join(SRC, 'site-verification.json'), 'utf8'));
   // Hand-made card art kept in this repository: src/cards/<repo>.svg.
   const hubCards = new Set((await readdir(path.join(SRC, 'cards')).catch(() => []))
@@ -34,11 +37,16 @@ export async function build({
 
   const enriched = await addReleases(fetchFn, token, await addActivity(fetchFn, token,
     await enrichAll(fetchFn, selectProjects(repos)), now));
-  const projects = orderProjects(enriched.map((p) => ({
+  const projects = orderProjects(applyOverrides(enriched.map((p) => ({
     ...p,
     // A card the project site publishes wins over one kept here.
     card: p.card ?? (hubCards.has(p.name) ? `/cards/${p.name}.svg` : null),
-  })), featured);
+  })), overrides, warn), featured, warn);
+  // src/og.png is a committed file. test/render-og.test.mjs keeps it equal to src/featured.json.
+  // The name on it is a constant, so the build reports a profile name that differs.
+  if (owner.name !== OG_PERSON.name) {
+    warn(`og.png names "${OG_PERSON.name}", but the GitHub profile says "${owner.name}". Update scripts/lib/render-og.mjs and run npm run og.`);
+  }
   // A shape change in the API must be loud, not a silently empty grid.
   if (projects.length === 0) {
     throw new Error('Discovered zero project sites — refusing to publish an empty hub.');

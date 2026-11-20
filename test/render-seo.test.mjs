@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { selectProjects, fetchOwner, SITE_ORIGIN } from '../scripts/lib/discover.mjs';
+import { selectProjects, fetchOwner, applyOverrides, SITE_ORIGIN } from '../scripts/lib/discover.mjs';
 import {
   AI_CRAWLERS, xmlEscape, isoDate, renderRobots,
   renderSitemapIndex, renderSitemapPages, renderLlms, renderLlmsFull, renderProjectsJson,
@@ -237,4 +237,24 @@ test('each feed entry also links to the project site', async () => {
   assert.ok(feed.includes(`<link rel="related" type="text/html" href="${SITE_ORIGIN}/p/" title="p project site"/>`));
   assert.equal((feed.match(/rel="related"/g) ?? []).length, 1);
   assert.equal((feed.match(/rel="alternate" type="text\/html" href="https:\/\/github/g) ?? []).length, 2);
+});
+
+test('llms.txt, llms-full.txt and projects.json use the texts of featured.json', () => {
+  const list = applyOverrides(projects, {
+    'cloud-cache-action': { displayName: 'Cloud Cache Action', description: 'Hand-made text.', language: 'Dockerfile' },
+  }, () => {});
+  const llms = renderLlms(owner, list);
+  assert.ok(llms.includes(`- [Cloud Cache Action](${SITE_ORIGIN}/cloud-cache-action/): Hand-made text.`));
+  const full = renderLlmsFull(owner, list);
+  assert.ok(full.includes('### Cloud Cache Action\n\n- Repository name: cloud-cache-action\n'));
+  assert.ok(full.includes('- Description: Hand-made text.'));
+  assert.ok(full.includes('- Language: Dockerfile'));
+  assert.ok(!full.includes('- Repository name: okf-skills'), 'a project without a display name has no such line');
+  const json = JSON.parse(renderProjectsJson(owner, list, NOW)).projects;
+  const cache = json.find((p) => p.name === 'cloud-cache-action');
+  assert.equal(cache.displayName, 'Cloud Cache Action');
+  assert.equal(cache.description, 'Hand-made text.');
+  assert.equal(cache.language, 'Dockerfile');
+  assert.equal(cache.url, `${SITE_ORIGIN}/cloud-cache-action/`);
+  assert.equal(json.find((p) => p.name === 'okf-skills').displayName, 'okf-skills');
 });

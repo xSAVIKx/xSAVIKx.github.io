@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { selectProjects, fetchOwner } from '../scripts/lib/discover.mjs';
+import { selectProjects, fetchOwner, applyOverrides } from '../scripts/lib/discover.mjs';
 import { htmlEscape, fill, renderCards, renderCardImage, renderJsonLd, renderIndex, render404, renderVerification,
-  renderStats, lastRowFill, shortDate }
+  renderStats, lastRowFill, shortDate, renderDescription, DESCRIPTION_MAX }
   from '../scripts/lib/render-html.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -236,8 +236,49 @@ test('without an X account no twitter:creator tag is emitted', () => {
   assert.doesNotMatch(out, /\{\{[A-Z_]+\}\}/);
 });
 
-test('the description states the project count, so a snippet answers by itself', () => {
-  assert.match(html, new RegExp(`<meta name="description" content="${projects.length} open-source project sites`));
+test('the description names the person, the title and the featured projects', () => {
+  const list = projects.map((p) => ({ ...p, featured: p.name === 'cloud-cache-action' || p.name === 'okf-skills' }));
+  const text = renderDescription(owner, list);
+  assert.equal(text,
+    `Open-source projects by ${owner.name}, Google Developer Expert, Cloud: cloud-cache-action, okf-skills and 1 more project site.`);
+  const out = renderIndex({ template: indexTemplate, owner, projects: list, now: NOW });
+  for (const tag of ['<meta name="description"', '<meta property="og:description"', '<meta name="twitter:description"']) {
+    assert.ok(out.includes(`${tag} content="${text}">`), `${tag} must have the description`);
+  }
+  assert.ok(!/gde|developers\.google/i.test(text), 'the title is plain text, without a profile address');
+});
+
+test('the description stays in the limit of a search snippet', () => {
+  const long = (n) => 'project-with-a-long-name-'.repeat(2) + n;
+  const list = ['a', 'b', 'c'].map((n) => ({ ...projects[0], name: long(n), featured: n !== 'c' }));
+  const text = renderDescription(owner, list);
+  assert.ok(!text.includes('more project'), 'a long text drops the count of the other projects');
+  assert.ok(text.endsWith(`${long('a')} and ${long('b')}.`));
+  assert.ok(renderDescription(owner, projects).length <= DESCRIPTION_MAX);
+});
+
+test('without a featured project the description names the first two projects', () => {
+  assert.ok(renderDescription(owner, projects).includes(`: ${projects[0].name}, ${projects[1].name} and 1 more project site.`));
+});
+
+test('the text alternative of og.png says what the image shows', () => {
+  assert.match(html, /<meta property="og:image:alt" content="[^"]*Google Developer Expert, Cloud\. Open-source projects: [^"]+">/);
+  assert.match(html, /<meta name="twitter:image:alt" content="[^"]*Google Developer Expert, Cloud/);
+});
+
+test('a card and the JSON-LD show the display name, and the links keep the repository name', () => {
+  const [p] = applyOverrides([projects[0]], { [projects[0].name]: { displayName: 'A Display <Name>', language: 'Dockerfile', description: 'Hand-made text.' } }, () => {});
+  const card = renderCards([p]);
+  assert.ok(card.includes(`<a href="${p.url}">A Display &lt;Name&gt;</a>`));
+  assert.ok(card.includes('<p>Hand-made text.</p>'));
+  assert.ok(card.includes('Dockerfile</li>'));
+  assert.ok(card.includes(`aria-label="Source for ${p.name}"`));
+  const item = JSON.parse(renderJsonLd(owner, [p]))['@graph'][2].hasPart.itemListElement[0].item;
+  assert.equal(item.name, 'A Display <Name>');
+  assert.equal(item.alternateName, p.name);
+  assert.equal(item.description, 'Hand-made text.');
+  assert.equal(item.programmingLanguage, 'Dockerfile');
+  assert.equal(item.url, p.url);
 });
 
 test('the avatar is requested at the size it is shown, not the 460px default', () => {

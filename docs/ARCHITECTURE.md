@@ -12,10 +12,12 @@ handful of files into `dist/`, and a workflow publishes that to GitHub Pages.
 | `scripts/lib/render-seo.mjs` | `robots.txt`, sitemap index and urlset, `llms.txt`, `llms-full.txt` |
 | `scripts/lib/render-html.mjs` | `index.html`, `404.html`, JSON-LD, HTML escaping |
 | `scripts/lib/render-art.mjs` | Generated SVG card art, seeded by repo name and tinted by language |
+| `scripts/lib/render-og.mjs` | SVG source of the social card `og.png`, and the PNG chunk functions |
+| `scripts/make-og.mjs` | `npm run og`: writes `src/og.svg` and `src/og.png`. Not a part of the build |
 | `identity/` | Shared design tokens for all the operator's sites; see `identity/README.md` |
 | `scripts/build.mjs` | Orchestrates discover → enrich → render → write `dist/` |
 | `scripts/verify.mjs` | Post-build checks, including live URL fetches |
-| `src/` | Templates, stylesheet, icons — copied or filled, never generated |
+| `src/` | Templates, stylesheet, icons — copied or filled. `og.svg` and `og.png` are made by `npm run og` and committed |
 
 ## How the project list is built
 
@@ -59,6 +61,73 @@ date on a card is the last human commit for the same reason.
 
 The count reads up to 5 pages of 100 commits for each project; past that, the
 count is a floor. An empty repository counts as zero.
+
+## Hand-made texts for a project
+
+`src/featured.json` can also set texts for one project, in the object `projects`.
+The key is the repository name. The fields are:
+
+| Field | Replaces | Shows in |
+| --- | --- | --- |
+| `displayName` | The repository name as the visible name | Card title, `llms.txt`, `llms-full.txt`, JSON-LD `name`, `displayName` in `projects.json`, `og.png` |
+| `description` | The GitHub repository description | Card, `llms.txt`, `llms-full.txt`, `projects.json`, JSON-LD |
+| `language` | The main language that GitHub calculates | Card fact line and dot colour, `llms-full.txt`, `projects.json`, JSON-LD, keywords |
+
+`applyOverrides` in `scripts/lib/discover.mjs` applies the texts one time, before the
+renderers get the list. Thus each output shows the same value.
+
+The repository name stays the identifier. `name` in `projects.json`, each URL, the
+"Source" link label, the 404 page and the release feed use the repository name. JSON-LD
+gives the repository name as `alternateName` when a display name is set.
+
+The build prints a warning, and does not stop, for each of these:
+
+- A project has an empty description on GitHub and in `src/featured.json`. The page then
+  shows "No description provided."
+- `projects` names a repository that has no project site.
+- An entry has an unknown field, or a value that is not a text.
+
+These texts are published in the name of the operator. The voice specification is
+`docs/voice/voice.md` in the `serhiichuk.dev` repository.
+
+## Meta description
+
+`renderDescription` in `scripts/lib/render-html.mjs` writes one text for the meta
+description, `og:description` and `twitter:description`. The text names the person, the
+title "Google Developer Expert, Cloud" as plain text, and the featured projects by
+repository name. It ends with the count of the other projects when the result has
+`DESCRIPTION_MAX` (155) characters or fewer. Without a featured project, it names the
+first two projects of the list. The title is the constant `OG_PERSON.title` in
+`scripts/lib/render-og.mjs`.
+
+## Social card `og.png`
+
+`og.png` is 1200 x 630. It shows the YS mark, the host name, the name of the person, the
+title "Google Developer Expert, Cloud" and the display names of the first two featured
+projects. It uses the light colours of `identity/tokens.json` and the system sans fonts.
+The smallest text is 40 px.
+
+The build does not make the image. It copies `src/og.png`. The reasons:
+
+- The repository has zero dependencies, and Node has no function that draws text to a PNG.
+- A converter in the build adds a tool to the GitHub Actions job, and the fonts of that
+  machine then decide the look of the card. A committed file is the same at each deploy.
+
+The steps after a change of `featured`, or of the `displayName` of a featured project:
+
+1. Run `npm run og`. It needs Chromium or Chrome (set `CHROME` to its path if necessary).
+2. Look at `src/og.png`.
+3. Commit `src/og.svg` and `src/og.png`.
+
+`scripts/make-og.mjs` writes the SVG source to `src/og.svg`, makes a screenshot of it with
+the headless browser, and adds a PNG text chunk `og-source-sha256` with the SHA-256 of the
+SVG source. `test/render-og.test.mjs` fails when `src/og.svg` differs from the source that
+`src/featured.json` gives, or when the hash in `src/og.png` differs from `src/og.svg`. So a
+stale card stops `npm test`, which runs before the build in both workflows. The same test
+checks the size (1200 x 630), the weight (less than 300 kB) and the smallest font size.
+
+The name on the card is the constant `OG_PERSON.name`. The build prints a warning when the
+GitHub profile has a different name.
 
 ## Cards
 

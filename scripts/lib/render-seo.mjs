@@ -85,7 +85,7 @@ export function renderLlms(owner, projects) {
   const items = projects.map((p) => {
     const desc = p.description || 'No description provided.';
     const nested = p.hasLlms ? ` — [llms.txt](${p.url}llms.txt)` : '';
-    return `- [${p.name}](${p.url}): ${desc}${nested}`;
+    return `- [${p.displayName ?? p.name}](${p.url}): ${desc}${nested}`;
   });
   return [
     `# ${owner.name} — open-source projects`,
@@ -109,8 +109,9 @@ export function renderLlms(owner, projects) {
 
 export function renderLlmsFull(owner, projects) {
   const sections = projects.map((p) => [
-    `### ${p.name}`,
+    `### ${p.displayName ?? p.name}`,
     '',
+    ...(p.displayName && p.displayName !== p.name ? [`- Repository name: ${p.name}`] : []),
     `- Site: ${p.url}`,
     `- Source: ${p.repoUrl}`,
     `- Description: ${p.description || 'No description provided.'}`,
@@ -150,7 +151,9 @@ export function renderProjectsJson(owner, projects, now) {
     owner: { name: owner.name, login: owner.login, url: PRIMARY_SITE, github: owner.htmlUrl },
     generated: new Date(now).toISOString(),
     projects: projects.map((p) => ({
+      // The repository name. It is the key for a lookup and a part of each URL.
       name: p.name,
+      displayName: p.displayName ?? p.name,
       description: p.description || null,
       url: p.url,
       repository: p.repoUrl,

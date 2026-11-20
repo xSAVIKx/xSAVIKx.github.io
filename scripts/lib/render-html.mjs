@@ -1,6 +1,7 @@
 import { SITE_ORIGIN, SITE_HOST, PRIMARY_SITE } from './discover.mjs';
 import { isoDate } from './render-seo.mjs';
 import { renderArt, languageColor } from './render-art.mjs';
+import { OG_PERSON } from './render-og.mjs';
 
 export function htmlEscape(s) {
   return String(s)
@@ -99,7 +100,7 @@ export function renderCards(projects) {
       <li class="${classes}">
         ${renderCardImage(p, { first: p === firstFeatured })}
         <div class="body">
-          ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.name)}</a><span class="arrow" aria-hidden="true">→</span></h3>
+          ${eyebrow}<h3><a href="${htmlEscape(p.url)}">${htmlEscape(p.displayName ?? p.name)}</a><span class="arrow" aria-hidden="true">→</span></h3>
           <p>${htmlEscape(p.description || 'No description provided.')}</p>
           ${topics}
         </div>
@@ -204,7 +205,8 @@ export function renderJsonLd(owner, projects, now) {
             item: {
               '@type': 'SoftwareSourceCode',
               '@id': `${p.url}#software`,
-              name: p.name,
+              name: p.displayName ?? p.name,
+              alternateName: p.displayName && p.displayName !== p.name ? p.name : undefined,
               description: p.description || undefined,
               url: p.url,
               codeRepository: p.repoUrl,
@@ -253,18 +255,47 @@ export function renderVerification(verification = {}) {
   return tags.join('\n');
 }
 
+/** The projects that a short text names: the featured ones, or the first two of the list. */
+function namedProjects(projects) {
+  const featured = projects.filter((p) => p.featured);
+  return (featured.length ? featured : projects).slice(0, 2).map((p) => p.name);
+}
+
+/** "a", "a and b". */
+const joinNames = (names) => names.join(' and ');
+
+/**
+ * The meta description, also for og:description and twitter:description. It names the person,
+ * the title and the featured projects by repository name, so a search snippet says what is here.
+ * The limit of a snippet is about 155 characters. A text that is too long loses the count of
+ * the other projects.
+ */
+export function renderDescription(owner, projects) {
+  const names = namedProjects(projects);
+  const rest = projects.length - names.length;
+  const head = `Open-source projects by ${owner.name}, ${OG_PERSON.title}: `;
+  const short = `${head}${joinNames(names)}.`;
+  if (rest <= 0) return short;
+  const long = `${head}${names.join(', ')} and ${rest} more project ${rest === 1 ? 'site' : 'sites'}.`;
+  return long.length <= DESCRIPTION_MAX ? long : short;
+}
+export const DESCRIPTION_MAX = 155;
+
+/** The text alternative of og.png. It says what the image shows. */
+export function renderOgAlt(owner, projects) {
+  return `${owner.name}, ${OG_PERSON.title}. Open-source projects: ${joinNames(namedProjects(projects))}.`;
+}
+
 export function renderIndex({ template, owner, projects, now, verification = {} }) {
   const title = `${owner.name} — open-source projects`;
   const langs = languages(projects).slice(0, 4);
-  // A description that answers "what is here" by itself, for search snippets and answer engines.
-  const description = `${projects.length} open-source project sites by ${owner.name}`
-    + (langs.length ? ` in ${langs.join(', ')}` : '')
-    + `: documentation, demos and tools published under ${SITE_HOST}.`;
+  const description = renderDescription(owner, projects);
   return fill(template, {
     ORIGIN: htmlEscape(SITE_ORIGIN),
     HOST: htmlEscape(SITE_HOST),
     TITLE: htmlEscape(title),
     DESCRIPTION: htmlEscape(description),
+    OG_ALT: htmlEscape(renderOgAlt(owner, projects)),
     KEYWORDS: htmlEscape([...langs, ...topTopics(projects, 8)].join(', ')),
     NAME: htmlEscape(owner.name),
     LOGIN: htmlEscape(owner.login),

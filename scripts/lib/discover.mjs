@@ -266,3 +266,40 @@ export function orderProjects(projects, featured = [], warn = console.warn) {
     (b.commits90 ?? 0) - (a.commits90 ?? 0) || b.updatedAt.localeCompare(a.updatedAt));
   return [...picked.map((p) => ({ ...p, featured: true })), ...rest];
 }
+
+/** The fields that `projects` in src/featured.json can set for one project. */
+export const OVERRIDE_FIELDS = ['displayName', 'description', 'language'];
+
+/**
+ * Applies the hand-made texts of src/featured.json. A value there replaces the GitHub value.
+ * `name` stays the repository name, because the URLs and the lookups use it.
+ * Each project gets `displayName`: the override, or the repository name.
+ * The function reports an unknown project name, an unknown field, a value that is not
+ * a text, and a project that has an empty description after the overrides.
+ */
+export function applyOverrides(projects, overrides = {}, warn = console.warn) {
+  const byName = new Map(Object.entries(overrides)
+    .filter(([name]) => !name.startsWith('_'))
+    .map(([name, fields]) => [name.toLowerCase(), [name, fields]]));
+  const known = new Set(projects.map((p) => p.name.toLowerCase()));
+  for (const [key, [name]] of byName) {
+    if (!known.has(key)) warn(`featured.json has texts for "${name}", but no project site has that name.`);
+  }
+  return projects.map((p) => {
+    const [, fields = {}] = byName.get(p.name.toLowerCase()) ?? [];
+    const out = { ...p, displayName: p.name };
+    for (const [field, value] of Object.entries(fields)) {
+      if (!OVERRIDE_FIELDS.includes(field)) {
+        warn(`featured.json: "${p.name}" has the unknown field "${field}". The fields are ${OVERRIDE_FIELDS.join(', ')}.`);
+      } else if (typeof value !== 'string' || !value.trim()) {
+        warn(`featured.json: "${p.name}" has an empty "${field}". The GitHub value stays.`);
+      } else {
+        out[field] = value.trim();
+      }
+    }
+    if (!out.description) {
+      warn(`"${p.name}" has an empty description. Add one on GitHub or in src/featured.json.`);
+    }
+    return out;
+  });
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Liberation Sans', Arial, sans-serif">
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  <rect width="1200" height="12" fill="#2563eb"/>
+  <rect x="80" y="72" width="96" height="96" rx="21" fill="#2563eb"/>
+  <text x="128" y="136" text-anchor="middle" font-size="46" font-weight="700" fill="#ffffff">YS</text>
+  <text x="1120" y="134" text-anchor="end" font-size="40" fill="#475569">xsavikx.github.io</text>
+  <text x="80" y="278" font-size="80" font-weight="700" fill="#0f172a">Yurii Serhiichuk</text>
+  <text x="80" y="346" font-size="44" font-weight="600" fill="#1d4ed8">Google Developer Expert, Cloud</text>
+  <rect x="80" y="394" width="1040" height="2" fill="#e2e8f0"/>
+  <rect x="80" y="448" width="14" height="30" rx="3" fill="#2563eb"/>
+  <text x="116" y="478" font-size="46" font-weight="600" fill="#0f172a">AWS Emulator Docker Image</text>
+  <rect x="80" y="520" width="14" height="30" rx="3" fill="#2563eb"/>
+  <text x="116" y="550" font-size="46" font-weight="600" fill="#0f172a">Cloud Cache Action</text>
+</svg>

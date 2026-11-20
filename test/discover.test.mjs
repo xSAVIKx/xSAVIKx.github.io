@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   SITE_ORIGIN, isProjectSite, toProject, selectProjects,
-  probeAsset, enrichAll, fetchAllRepos, fetchOwner, findCard, orderProjects, isBotCommit, fetchActivity,
+  probeAsset, enrichAll, fetchAllRepos, fetchOwner, findCard, orderProjects, isBotCommit, fetchActivity, applyOverrides,
 } from '../scripts/lib/discover.mjs';
 
 const repos = JSON.parse(readFileSync(new URL('./fixtures/repos.json', import.meta.url)));
@@ -189,4 +189,44 @@ test('an empty repository has no activity rather than failing the build', async 
   const empty = async () => ({ ok: false, status: 409 });
   const out = await fetchActivity(empty, null, proj('e', null, '2026-01-01'), new Date('2026-09-11'));
   assert.deepEqual(out, { commits90: 0, updatedAt: '2026-01-01' });
+});
+
+test('a text in featured.json replaces the GitHub value, and the repository name stays', () => {
+  const warnings = [];
+  const out = applyOverrides(selectProjects(repos), {
+    _comment: 'ignored',
+    androidscreencast: { displayName: 'Android Screencast', description: ' By hand. ', language: 'Kotlin' },
+    'okf-skills': { description: 'OKF catalog skills.' },
+  }, (m) => warnings.push(m));
+  const android = out.find((p) => p.name === 'AndroidScreencast');
+  assert.equal(android.displayName, 'Android Screencast');
+  assert.equal(android.description, 'By hand.');
+  assert.equal(android.language, 'Kotlin');
+  assert.equal(android.url, `${SITE_ORIGIN}/AndroidScreencast/`);
+  const cache = out.find((p) => p.name === 'cloud-cache-action');
+  assert.equal(cache.displayName, 'cloud-cache-action', 'without a display name the card shows the repository name');
+  assert.equal(cache.description, 'High-performance GitHub Action for CI cache.');
+  assert.deepEqual(warnings, []);
+});
+
+test('a project with an empty description gives a warning', () => {
+  const warnings = [];
+  applyOverrides(selectProjects(repos), {}, (m) => warnings.push(m));
+  assert.deepEqual(warnings, ['"okf-skills" has an empty description. Add one on GitHub or in src/featured.json.']);
+});
+
+test('a wrong entry in the texts of featured.json gives a warning and changes nothing', () => {
+  const warnings = [];
+  const out = applyOverrides(selectProjects(repos).filter((p) => p.name === 'cloud-cache-action'), {
+    'no-such-repo': { description: 'x' },
+    'cloud-cache-action': { name: 'other', description: '  ', language: 7 },
+  }, (m) => warnings.push(m));
+  assert.equal(out[0].name, 'cloud-cache-action');
+  assert.equal(out[0].description, 'High-performance GitHub Action for CI cache.');
+  assert.equal(out[0].language, 'TypeScript');
+  assert.equal(warnings.length, 4);
+  assert.match(warnings[0], /no-such-repo/);
+  assert.match(warnings[1], /unknown field "name"/);
+  assert.match(warnings[2], /empty "description"/);
+  assert.match(warnings[3], /empty "language"/);
 });
